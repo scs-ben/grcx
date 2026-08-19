@@ -92,8 +92,8 @@ const printPage = () => {
                         <p
                             class="mt-0.5 text-xs text-slate-600 dark:text-slate-400"
                         >
-                            Save or print this page for your records. Bring
-                            it to race check-in.
+                            Save or print this page for your records. Bring it
+                            to race check-in.
                         </p>
                     </div>
                 </div>
@@ -155,7 +155,7 @@ const printPage = () => {
                                 >Bib Number</span
                             >
                             <span
-                                class="text-sm font-mono font-bold text-amber-600 dark:text-amber-400"
+                                class="font-mono text-sm font-bold text-amber-600 dark:text-amber-400"
                                 >#{{ racer.bib_number }}</span
                             >
                         </div>
@@ -185,13 +185,25 @@ const printPage = () => {
                             :key="reg.id"
                             class="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950 print:bg-slate-50"
                         >
-                            <div class="flex items-center justify-between border-b border-slate-200 pb-3 dark:border-slate-800">
-                                <div class="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
-                                    <span v-if="reg.event" class="flex items-center gap-1 font-semibold text-slate-900 dark:text-white">
-                                        <Calendar class="h-3.5 w-3.5 text-amber-500" />
+                            <div
+                                class="flex items-center justify-between border-b border-slate-200 pb-3 dark:border-slate-800"
+                            >
+                                <div
+                                    class="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400"
+                                >
+                                    <span
+                                        v-if="reg.event"
+                                        class="flex items-center gap-1 font-semibold text-slate-900 dark:text-white"
+                                    >
+                                        <Calendar
+                                            class="h-3.5 w-3.5 text-amber-500"
+                                        />
                                         {{ reg.event.name }}
                                     </span>
-                                    <span v-else class="font-semibold text-amber-600 dark:text-amber-400">
+                                    <span
+                                        v-else
+                                        class="font-semibold text-amber-600 dark:text-amber-400"
+                                    >
                                         Full Season Pass (All 3 Events)
                                     </span>
                                 </div>
@@ -205,8 +217,12 @@ const printPage = () => {
                                         "
                                         >{{ reg.status }}</span
                                     >
-                                    <span class="text-sm font-bold text-slate-900 dark:text-white">
-                                        ${{ Number(reg.amount_paid).toFixed(2) }}
+                                    <span
+                                        class="text-sm font-bold text-slate-900 dark:text-white"
+                                    >
+                                        ${{
+                                            Number(reg.amount_paid).toFixed(2)
+                                        }}
                                     </span>
                                 </div>
                             </div>
@@ -223,8 +239,14 @@ const printPage = () => {
                                         <Bike class="h-3.5 w-3.5" />
                                     </div>
                                     <div>
-                                        <span class="font-bold text-slate-900 dark:text-white">{{ cat.name }}</span>
-                                        <span class="ml-1.5 text-[10px] font-semibold text-slate-500 dark:text-slate-400">Wave {{ cat.wave }}</span>
+                                        <span
+                                            class="font-bold text-slate-900 dark:text-white"
+                                            >{{ cat.name }}</span
+                                        >
+                                        <span
+                                            class="ml-1.5 text-[10px] font-semibold text-slate-500 dark:text-slate-400"
+                                            >Wave {{ cat.wave }}</span
+                                        >
                                     </div>
                                 </div>
                             </div>

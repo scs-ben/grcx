@@ -101,6 +101,7 @@ const checkInAvailableCategories = computed(() => {
     if (!checkInForm.waves || checkInForm.waves.length === 0) {
         return props.categories;
     }
+
     return props.categories.filter((c) => checkInForm.waves.includes(c.wave));
 });
 
@@ -111,7 +112,9 @@ const toggleWaveForCheckIn = (wave: string) => {
         checkInForm.waves.push(wave);
     }
 
-    const validCatIds = new Set(checkInAvailableCategories.value.map((c) => c.id));
+    const validCatIds = new Set(
+        checkInAvailableCategories.value.map((c) => c.id),
+    );
     checkInForm.category_ids = checkInForm.category_ids.filter((id) =>
         validCatIds.has(id),
     );
@@ -123,7 +126,9 @@ const openCheckIn = (reg: Registration) => {
     checkInForm.bib_number = reg.racer?.bib_number || '';
     checkInForm.category_ids = (reg.categories || []).map((c) => c.id);
     // Pre-select registration categories' waves
-    const waves = Array.from(new Set((reg.categories || []).map((c) => c.wave)));
+    const waves = Array.from(
+        new Set((reg.categories || []).map((c) => c.wave)),
+    );
     checkInForm.waves = waves.length > 0 ? waves : ['C'];
 };
 
@@ -167,12 +172,15 @@ const getFeeAmount = (feeType: string): number => {
     if (feeType === 'season') {
         return 70.0;
     }
+
     if (feeType === 'youth') {
         return 20.0;
     }
+
     if (feeType === 'race') {
         return 35.0;
     }
+
     return 0.0; // bc, kids, costume, etc.
 };
 
@@ -197,11 +205,21 @@ const matchingRacers = computed(() => {
         const bib = (r.bib_number || '').toLowerCase();
 
         if (fn && ln) {
-            return (rFn.includes(fn) && rLn.includes(ln)) || bib.includes(fn) || bib.includes(ln);
+            return (
+                (rFn.includes(fn) && rLn.includes(ln)) ||
+                bib.includes(fn) ||
+                bib.includes(ln)
+            );
         }
+
         if (fn) {
-            return rFn.includes(fn) || `${rFn} ${rLn}`.includes(fn) || bib.includes(fn);
+            return (
+                rFn.includes(fn) ||
+                `${rFn} ${rLn}`.includes(fn) ||
+                bib.includes(fn)
+            );
         }
+
         return rLn.includes(ln) || bib.includes(ln);
     });
 });
@@ -222,6 +240,7 @@ const onDayOfNameInput = () => {
         dayOfForm.racer_option = 'new';
         dayOfForm.racer_id = null;
     }
+
     isDayOfNameDropdownOpen.value = true;
 };
 
@@ -255,6 +274,7 @@ const submitDayOf = () => {
 
     if (dayOfForm.racer_option === 'existing' && !dayOfForm.racer_id) {
         alert('Please search and select an existing racer.');
+
         return;
     }
 
@@ -268,8 +288,7 @@ const submitDayOf = () => {
         onSuccess: () => {
             showDayOfModal.value = false;
             dayOfForm.reset();
-            dayOfRacerSearch.value = '';
-            isDayOfRacerDropdownOpen.value = false;
+            isDayOfNameDropdownOpen.value = false;
         },
     });
 };
@@ -417,13 +436,22 @@ const submitDayOf = () => {
                                 <span
                                     class="font-medium text-slate-900 dark:text-slate-100"
                                     >{{
-                                        (r.categories || []).map((c) => c.name).join(', ') || 'None'
+                                        (r.categories || [])
+                                            .map((c) => c.name)
+                                            .join(', ') || 'None'
                                     }}</span
                                 >
                                 <span
                                     class="block font-mono text-[10px] text-slate-500 dark:text-slate-400"
-                                    >Wave {{
-                                        Array.from(new Set((r.categories || []).map((c) => c.wave))).join(', ') || 'N/A'
+                                    >Wave
+                                    {{
+                                        Array.from(
+                                            new Set(
+                                                (r.categories || []).map(
+                                                    (c) => c.wave,
+                                                ),
+                                            ),
+                                        ).join(', ') || 'N/A'
                                     }}</span
                                 >
                             </td>
@@ -571,7 +599,9 @@ const submitDayOf = () => {
                                     </span>
                                 </label>
                                 <div
-                                    v-if="checkInAvailableCategories.length === 0"
+                                    v-if="
+                                        checkInAvailableCategories.length === 0
+                                    "
                                     class="py-2 text-center text-xs text-slate-500"
                                 >
                                     No categories available for selected waves.
@@ -654,11 +684,16 @@ const submitDayOf = () => {
                             class="flex items-center justify-between rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-700 dark:text-emerald-300"
                         >
                             <span class="font-bold">
-                                Linked to Existing Racer: {{ dayOfForm.first_name }} {{ dayOfForm.last_name }}
+                                Linked to Existing Racer:
+                                {{ dayOfForm.first_name }}
+                                {{ dayOfForm.last_name }}
                             </span>
                             <button
                                 type="button"
-                                @click="dayOfForm.racer_option = 'new'; dayOfForm.racer_id = null;"
+                                @click="
+                                    dayOfForm.racer_option = 'new';
+                                    dayOfForm.racer_id = null;
+                                "
                                 class="text-[11px] font-semibold text-emerald-800 underline hover:no-underline dark:text-emerald-200"
                             >
                                 Change / Unlink
@@ -683,10 +718,16 @@ const submitDayOf = () => {
 
                                 <!-- Live Existing Racer Suggestions Dropdown -->
                                 <div
-                                    v-if="isDayOfNameDropdownOpen && matchingRacers.length > 0 && dayOfForm.racer_option !== 'existing'"
+                                    v-if="
+                                        isDayOfNameDropdownOpen &&
+                                        matchingRacers.length > 0 &&
+                                        dayOfForm.racer_option !== 'existing'
+                                    "
                                     class="absolute top-full right-0 left-0 z-30 mt-1 max-h-48 divide-y divide-slate-100 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-xl dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900"
                                 >
-                                    <div class="bg-slate-50 px-3 py-1.5 text-[10px] font-bold text-amber-600 uppercase dark:bg-slate-950 dark:text-amber-400">
+                                    <div
+                                        class="bg-slate-50 px-3 py-1.5 text-[10px] font-bold text-amber-600 uppercase dark:bg-slate-950 dark:text-amber-400"
+                                    >
                                         ⚡ Existing Racer Match Found:
                                     </div>
                                     <button
@@ -697,18 +738,32 @@ const submitDayOf = () => {
                                         class="flex w-full items-center justify-between px-3.5 py-2 text-left text-xs transition-colors hover:bg-amber-500/10"
                                     >
                                         <div>
-                                            <span class="font-bold text-slate-900 dark:text-white">
-                                                {{ r.first_name }} {{ r.last_name }}
+                                            <span
+                                                class="font-bold text-slate-900 dark:text-white"
+                                            >
+                                                {{ r.first_name }}
+                                                {{ r.last_name }}
                                             </span>
-                                            <span v-if="r.email" class="block text-[10px] text-slate-500 dark:text-slate-400">
+                                            <span
+                                                v-if="r.email"
+                                                class="block text-[10px] text-slate-500 dark:text-slate-400"
+                                            >
                                                 {{ r.email }}
                                             </span>
                                         </div>
-                                        <div class="flex items-center gap-2 font-mono text-[11px]">
-                                            <span v-if="r.team" class="text-slate-500 dark:text-slate-400">
+                                        <div
+                                            class="flex items-center gap-2 font-mono text-[11px]"
+                                        >
+                                            <span
+                                                v-if="r.team"
+                                                class="text-slate-500 dark:text-slate-400"
+                                            >
                                                 {{ r.team.name }}
                                             </span>
-                                            <span v-if="r.bib_number" class="rounded bg-amber-500/20 px-1.5 py-0.5 font-bold text-amber-700 dark:text-amber-300">
+                                            <span
+                                                v-if="r.bib_number"
+                                                class="rounded bg-amber-500/20 px-1.5 py-0.5 font-bold text-amber-700 dark:text-amber-300"
+                                            >
                                                 Bib #{{ r.bib_number }}
                                             </span>
                                         </div>

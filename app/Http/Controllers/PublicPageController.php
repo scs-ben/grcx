@@ -117,6 +117,7 @@ class PublicPageController extends Controller
 
         $startListByCategory = [];
         foreach ($registrations as $reg) {
+            /** @var Category $cat */
             foreach ($reg->categories as $cat) {
                 $startListByCategory[$cat->id][] = $reg;
             }

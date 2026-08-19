@@ -11,7 +11,6 @@ import {
     CheckCircle2,
     Clock,
     XCircle,
-    Search,
 } from '@lucide/vue';
 import { ref, computed, watch } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -120,11 +119,21 @@ const createMatchingRacers = computed(() => {
         const bib = (r.bib_number || '').toLowerCase();
 
         if (fn && ln) {
-            return (rFn.includes(fn) && rLn.includes(ln)) || bib.includes(fn) || bib.includes(ln);
+            return (
+                (rFn.includes(fn) && rLn.includes(ln)) ||
+                bib.includes(fn) ||
+                bib.includes(ln)
+            );
         }
+
         if (fn) {
-            return rFn.includes(fn) || `${rFn} ${rLn}`.includes(fn) || bib.includes(fn);
+            return (
+                rFn.includes(fn) ||
+                `${rFn} ${rLn}`.includes(fn) ||
+                bib.includes(fn)
+            );
         }
+
         return rLn.includes(ln) || bib.includes(ln);
     });
 });
@@ -146,6 +155,7 @@ const onCreateNameInput = () => {
         createForm.racer_option = 'new';
         createForm.racer_id = null;
     }
+
     isCreateRacerDropdownOpen.value = true;
 };
 
@@ -187,6 +197,7 @@ const closeCreateModal = () => {
 const submitCreateRegistration = () => {
     if (createForm.racer_option === 'existing' && !createForm.racer_id) {
         alert('Please search and select an existing racer.');
+
         return;
     }
 
@@ -209,19 +220,25 @@ const getFeeAmount = (feeType: string, isSeasonPass: boolean): number => {
     if (isSeasonPass || feeType === 'season') {
         return 70.0;
     }
+
     if (feeType === 'youth') {
         return 20.0;
     }
+
     if (feeType === 'race') {
         return 35.0;
     }
+
     return 0.0; // bc, kids, costume, etc.
 };
 
 watch(
     () => [createForm.fee_type, createForm.is_season_pass],
     ([newFeeType, newIsSeasonPass]) => {
-        createForm.amount_paid = getFeeAmount(newFeeType as string, newIsSeasonPass as boolean);
+        createForm.amount_paid = getFeeAmount(
+            newFeeType as string,
+            newIsSeasonPass as boolean,
+        );
     },
 );
 
@@ -246,7 +263,10 @@ watch(
     () => [editForm.fee_type, editForm.is_season_pass],
     ([newFeeType, newIsSeasonPass]) => {
         if (editingRegistration.value) {
-            editForm.amount_paid = getFeeAmount(newFeeType as string, newIsSeasonPass as boolean);
+            editForm.amount_paid = getFeeAmount(
+                newFeeType as string,
+                newIsSeasonPass as boolean,
+            );
         }
     },
 );
@@ -277,6 +297,7 @@ const updateRegistration = () => {
 
     if (editForm.category_ids.length === 0) {
         alert('Please select at least one race category.');
+
         return;
     }
 
@@ -484,13 +505,22 @@ const deleteRegistration = (id: number) => {
                                 <span
                                     class="font-medium text-slate-900 dark:text-slate-100"
                                     >{{
-                                        (r.categories || []).map((c) => c.name).join(', ') || 'None'
+                                        (r.categories || [])
+                                            .map((c) => c.name)
+                                            .join(', ') || 'None'
                                     }}</span
                                 >
                                 <span
                                     class="block font-mono text-[10px] text-slate-500 dark:text-slate-400"
-                                    >Wave {{
-                                        Array.from(new Set((r.categories || []).map((c) => c.wave))).join(', ') || 'N/A'
+                                    >Wave
+                                    {{
+                                        Array.from(
+                                            new Set(
+                                                (r.categories || []).map(
+                                                    (c) => c.wave,
+                                                ),
+                                            ),
+                                        ).join(', ') || 'N/A'
                                     }}</span
                                 >
                             </td>
@@ -845,11 +875,16 @@ const deleteRegistration = (id: number) => {
                             class="flex items-center justify-between rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-700 dark:text-emerald-300"
                         >
                             <span class="font-bold">
-                                Linked to Existing Racer: {{ createForm.first_name }} {{ createForm.last_name }}
+                                Linked to Existing Racer:
+                                {{ createForm.first_name }}
+                                {{ createForm.last_name }}
                             </span>
                             <button
                                 type="button"
-                                @click="createForm.racer_option = 'new'; createForm.racer_id = null;"
+                                @click="
+                                    createForm.racer_option = 'new';
+                                    createForm.racer_id = null;
+                                "
                                 class="text-[11px] font-semibold text-emerald-800 underline hover:no-underline dark:text-emerald-200"
                             >
                                 Change / Unlink
@@ -874,10 +909,16 @@ const deleteRegistration = (id: number) => {
 
                                 <!-- Live Existing Racer Suggestions Dropdown -->
                                 <div
-                                    v-if="isCreateRacerDropdownOpen && createMatchingRacers.length > 0 && createForm.racer_option !== 'existing'"
+                                    v-if="
+                                        isCreateRacerDropdownOpen &&
+                                        createMatchingRacers.length > 0 &&
+                                        createForm.racer_option !== 'existing'
+                                    "
                                     class="absolute top-full right-0 left-0 z-30 mt-1 max-h-48 divide-y divide-slate-100 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-xl dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900"
                                 >
-                                    <div class="bg-slate-50 px-3 py-1.5 text-[10px] font-bold text-amber-600 uppercase dark:bg-slate-950 dark:text-amber-400">
+                                    <div
+                                        class="bg-slate-50 px-3 py-1.5 text-[10px] font-bold text-amber-600 uppercase dark:bg-slate-950 dark:text-amber-400"
+                                    >
                                         ⚡ Existing Racer Match Found:
                                     </div>
                                     <button
@@ -888,18 +929,32 @@ const deleteRegistration = (id: number) => {
                                         class="flex w-full items-center justify-between px-3.5 py-2 text-left text-xs transition-colors hover:bg-amber-500/10"
                                     >
                                         <div>
-                                            <span class="font-bold text-slate-900 dark:text-white">
-                                                {{ r.first_name }} {{ r.last_name }}
+                                            <span
+                                                class="font-bold text-slate-900 dark:text-white"
+                                            >
+                                                {{ r.first_name }}
+                                                {{ r.last_name }}
                                             </span>
-                                            <span v-if="r.email" class="block text-[10px] text-slate-500 dark:text-slate-400">
+                                            <span
+                                                v-if="r.email"
+                                                class="block text-[10px] text-slate-500 dark:text-slate-400"
+                                            >
                                                 {{ r.email }}
                                             </span>
                                         </div>
-                                        <div class="flex items-center gap-2 font-mono text-[11px]">
-                                            <span v-if="r.team" class="text-slate-500 dark:text-slate-400">
+                                        <div
+                                            class="flex items-center gap-2 font-mono text-[11px]"
+                                        >
+                                            <span
+                                                v-if="r.team"
+                                                class="text-slate-500 dark:text-slate-400"
+                                            >
                                                 {{ r.team.name }}
                                             </span>
-                                            <span v-if="r.bib_number" class="rounded bg-amber-500/20 px-1.5 py-0.5 font-bold text-amber-700 dark:text-amber-300">
+                                            <span
+                                                v-if="r.bib_number"
+                                                class="rounded bg-amber-500/20 px-1.5 py-0.5 font-bold text-amber-700 dark:text-amber-300"
+                                            >
                                                 Bib #{{ r.bib_number }}
                                             </span>
                                         </div>

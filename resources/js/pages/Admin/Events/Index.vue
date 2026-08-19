@@ -63,6 +63,7 @@ const draggedCatId = ref<number | null>(null);
 
 const onCatDragStart = (catId: number, e: DragEvent) => {
     draggedCatId.value = catId;
+
     if (e.dataTransfer) {
         e.dataTransfer.effectAllowed = 'move';
     }
@@ -70,6 +71,7 @@ const onCatDragStart = (catId: number, e: DragEvent) => {
 
 const onCatDragOver = (targetCatId: number, wave: string, e: DragEvent) => {
     e.preventDefault();
+
     if (!draggedCatId.value || draggedCatId.value === targetCatId) {
         return;
     }
@@ -379,7 +381,7 @@ const deleteTeam = (t: Team) => {
                         </p>
                     </div>
                     <button
-                        @click="openCreateCategoryModal"
+                        @click="() => openCreateCategoryModal()"
                         class="flex items-center gap-1.5 rounded-xl bg-amber-500 px-4 py-2.5 text-xs font-bold text-slate-950 shadow-sm transition-all hover:bg-amber-400"
                     >
                         <Plus class="h-4 w-4" /> Add Category
@@ -408,8 +410,9 @@ const deleteTeam = (t: Team) => {
                                     class="text-xs font-semibold text-slate-500 dark:text-slate-400"
                                 >
                                     {{
-                                        localCategories.filter((c) => c.wave === w)
-                                            .length
+                                        localCategories.filter(
+                                            (c) => c.wave === w,
+                                        ).length
                                     }}
                                     Categories
                                 </span>
@@ -419,7 +422,8 @@ const deleteTeam = (t: Team) => {
                                     class="inline-flex items-center gap-1 rounded-lg bg-amber-500/10 px-2.5 py-1 text-xs font-bold text-amber-700 transition-colors hover:bg-amber-500/20 dark:bg-amber-500/20 dark:text-amber-300"
                                     :title="`Add category to Wave ${w}`"
                                 >
-                                    <Plus class="h-3.5 w-3.5" /> Add to Wave {{ w }}
+                                    <Plus class="h-3.5 w-3.5" /> Add to Wave
+                                    {{ w }}
                                 </button>
                             </div>
                         </div>
@@ -430,7 +434,9 @@ const deleteTeam = (t: Team) => {
                                     class="bg-slate-100/50 text-[10px] font-bold text-slate-500 uppercase dark:bg-slate-900/50 dark:text-slate-400"
                                 >
                                     <tr>
-                                        <th class="w-10 px-3 py-3 text-center"></th>
+                                        <th
+                                            class="w-10 px-3 py-3 text-center"
+                                        ></th>
                                         <th class="px-4 py-3">Podium Order</th>
                                         <th class="px-6 py-3">Category Name</th>
                                         <th class="px-6 py-3">
@@ -449,23 +455,40 @@ const deleteTeam = (t: Team) => {
                                     class="divide-y divide-slate-100 dark:divide-slate-800/60"
                                 >
                                     <tr
-                                        v-for="(cat, idx) in localCategories.filter(
+                                        v-for="(
+                                            cat, idx
+                                        ) in localCategories.filter(
                                             (c) => c.wave === w,
                                         )"
                                         :key="cat.id"
                                         draggable="true"
-                                        @dragstart="onCatDragStart(cat.id, $event)"
-                                        @dragover="onCatDragOver(cat.id, w, $event)"
+                                        @dragstart="
+                                            onCatDragStart(cat.id, $event)
+                                        "
+                                        @dragover="
+                                            onCatDragOver(cat.id, w, $event)
+                                        "
                                         @dragend="onCatDragEnd(w)"
-                                        class="cursor-move hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors"
-                                        :class="{'opacity-50 bg-amber-500/10': draggedCatId === cat.id}"
+                                        class="cursor-move transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/30"
+                                        :class="{
+                                            'bg-amber-500/10 opacity-50':
+                                                draggedCatId === cat.id,
+                                        }"
                                     >
-                                        <td class="w-10 px-3 py-3.5 text-center text-slate-400">
-                                            <GripVertical class="h-4 w-4 inline-block" />
+                                        <td
+                                            class="w-10 px-3 py-3.5 text-center text-slate-400"
+                                        >
+                                            <GripVertical
+                                                class="inline-block h-4 w-4"
+                                            />
                                         </td>
                                         <td class="px-4 py-3.5 font-mono">
-                                            <span class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-amber-500/10 font-bold text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">
-                                                #{{ cat.podium_order ?? (idx + 1) }}
+                                            <span
+                                                class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-amber-500/10 font-bold text-amber-700 dark:bg-amber-500/20 dark:text-amber-300"
+                                            >
+                                                #{{
+                                                    cat.podium_order ?? idx + 1
+                                                }}
                                             </span>
                                         </td>
                                         <td

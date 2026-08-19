@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3';
 import { Bike } from '@lucide/vue';
-import { computed, watch } from 'vue';
+import { computed } from 'vue';
 import PublicLayout from '@/layouts/PublicLayout.vue';
 
 interface Event {
@@ -375,29 +375,45 @@ const submit = () => {
                         </p>
 
                         <div
-                            class="grid max-h-60 grid-cols-1 gap-2 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50 p-3 sm:grid-cols-2 dark:border-slate-800 dark:bg-slate-950"
+                            class="grid max-h-60 grid-cols-1 gap-2.5 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50 p-3 sm:grid-cols-2 dark:border-slate-800 dark:bg-slate-950"
                         >
                             <label
                                 v-for="cat in filteredCategories"
                                 :key="cat.id"
-                                class="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white p-2 text-xs font-semibold text-slate-900 transition-colors hover:border-amber-500 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+                                class="flex cursor-pointer items-center justify-between rounded-xl border border-slate-200 bg-white p-3 text-xs font-semibold text-slate-900 shadow-xs transition-colors hover:border-amber-500 hover:bg-amber-500/5 dark:border-slate-800 dark:bg-slate-900 dark:text-white dark:hover:border-amber-500"
                             >
-                                <input
-                                    type="checkbox"
-                                    :value="cat.id"
-                                    v-model="form.category_ids"
-                                    class="rounded text-amber-500 focus:ring-amber-500"
-                                />
-                                <div class="flex flex-col">
-                                    <span class="font-bold">{{
-                                        cat.name
-                                    }}</span>
-                                    <span
-                                        class="text-[10px] text-slate-500 dark:text-slate-400"
-                                        >Wave {{ cat.wave }}</span
-                                    >
+                                <div class="flex items-center gap-2.5">
+                                    <input
+                                        type="checkbox"
+                                        :value="cat.id"
+                                        v-model="form.category_ids"
+                                        class="h-4 w-4 rounded border-slate-300 text-amber-500 focus:ring-amber-500 dark:border-slate-700"
+                                    />
+                                    <div class="flex flex-col">
+                                        <span
+                                            class="font-bold text-slate-900 dark:text-white"
+                                            >{{ cat.name }}</span
+                                        >
+                                        <span
+                                            v-if="cat.duration_description"
+                                            class="text-[10px] text-slate-500 dark:text-slate-400"
+                                        >
+                                            {{ cat.duration_description }}
+                                        </span>
+                                    </div>
                                 </div>
+                                <span
+                                    class="rounded-md border border-slate-200 bg-slate-100 px-2 py-0.5 font-mono text-[10px] font-bold text-slate-600 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-300"
+                                >
+                                    Wave {{ cat.wave }}
+                                </span>
                             </label>
+                            <div
+                                v-if="filteredCategories.length === 0"
+                                class="col-span-2 py-6 text-center text-xs text-slate-500 italic"
+                            >
+                                No categories available for selected waves.
+                            </div>
                         </div>
                     </div>
 

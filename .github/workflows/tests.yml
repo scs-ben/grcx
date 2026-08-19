@@ -47,5 +47,3 @@ jobs:
         run: curl -sS "${FORGE_DEPLOY_HOOK}"
         env:
           FORGE_DEPLOY_HOOK: ${{ secrets.FORGE_DEPLOY_HOOK || 'https://forge.laravel.com/servers/768845/sites/3345175/deploy/http?token=fLpRNgLdADY9Swb8zzgrY0Jz183gpFzf55EqPbAa' }}
-
-

@@ -124,13 +124,16 @@ const removeRow = (index: number) => {
 };
 
 const getRacerActiveReg = (racer: Racer) => {
-    return racer.registrations?.find((reg) => {
-        return reg.event_id === selectedEvent.value || reg.is_season_pass;
-    }) || racer.registrations?.[0];
+    return (
+        racer.registrations?.find((reg) => {
+            return reg.event_id === selectedEvent.value || reg.is_season_pass;
+        }) || racer.registrations?.[0]
+    );
 };
 
 const isRacerInWaveAndCheckedIn = (racer: Racer) => {
     const reg = getRacerActiveReg(racer);
+
     if (!reg || !reg.is_checked_in) {
         return false;
     }
@@ -154,7 +157,8 @@ const finishedRacerIds = computed(() => {
 const checkedInWaveRacers = computed(() => {
     const q = racerSearchQuery.value.toLowerCase().trim();
     const list = props.racers.filter(
-        (r) => !finishedRacerIds.value.has(r.id) && isRacerInWaveAndCheckedIn(r),
+        (r) =>
+            !finishedRacerIds.value.has(r.id) && isRacerInWaveAndCheckedIn(r),
     );
 
     if (!q) {
@@ -167,7 +171,8 @@ const checkedInWaveRacers = computed(() => {
 const otherRacers = computed(() => {
     const q = racerSearchQuery.value.toLowerCase().trim();
     const list = props.racers.filter(
-        (r) => !finishedRacerIds.value.has(r.id) && !isRacerInWaveAndCheckedIn(r),
+        (r) =>
+            !finishedRacerIds.value.has(r.id) && !isRacerInWaveAndCheckedIn(r),
     );
 
     if (!q) {
@@ -187,7 +192,8 @@ const selectRacerForQuickAdd = (racer: Racer) => {
     isDropdownOpen.value = false;
 
     // Set default category to racer's registered category if in this wave, otherwise wave default
-    const registeredCat = racer.registrations?.flatMap((r) => r.categories || [])
+    const registeredCat = racer.registrations
+        ?.flatMap((r) => r.categories || [])
         .find((c) => waveCategories.value.some((wc) => wc.id === c.id))?.id;
 
     if (registeredCat) {
@@ -212,13 +218,12 @@ const handleQuickAdd = () => {
         }
     }
 
-    const firstMatchingCat = racerToAdd.registrations?.flatMap((r) => r.categories || [])
+    const firstMatchingCat = racerToAdd.registrations
+        ?.flatMap((r) => r.categories || [])
         .find((c) => waveCategories.value.some((wc) => wc.id === c.id))?.id;
 
     const catId =
-        quickAddCategoryId.value ||
-        firstMatchingCat ||
-        defaultCategoryId.value;
+        quickAddCategoryId.value || firstMatchingCat || defaultCategoryId.value;
 
     const exists = form.results.some(
         (row) => row.racer_id === racerToAdd!.id && row.category_id === catId,
@@ -387,16 +392,21 @@ const submit = () => {
                             <!-- Search Dropdown Results with Wave Checked-In Racers at Top -->
                             <div
                                 v-if="
-                                    isDropdownOpen && (checkedInWaveRacers.length > 0 || otherRacers.length > 0)
+                                    isDropdownOpen &&
+                                    (checkedInWaveRacers.length > 0 ||
+                                        otherRacers.length > 0)
                                 "
                                 class="absolute top-11 right-0 left-0 z-20 max-h-72 divide-y divide-slate-100 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-xl dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900"
                             >
                                 <!-- Checked-In Wave Racers (TOP) -->
                                 <template v-if="checkedInWaveRacers.length > 0">
                                     <div
-                                        class="bg-emerald-500/10 px-3.5 py-1.5 text-[10px] font-black uppercase tracking-wider text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
+                                        class="bg-emerald-500/10 px-3.5 py-1.5 text-[10px] font-black tracking-wider text-emerald-700 uppercase dark:bg-emerald-950/40 dark:text-emerald-300"
                                     >
-                                        ✓ Checked-In Wave {{ selectedWave }} Racers ({{ checkedInWaveRacers.length }})
+                                        ✓ Checked-In Wave
+                                        {{ selectedWave }} Racers ({{
+                                            checkedInWaveRacers.length
+                                        }})
                                     </div>
                                     <button
                                         v-for="r in checkedInWaveRacers"
@@ -406,8 +416,11 @@ const submit = () => {
                                         class="flex w-full items-center justify-between bg-emerald-500/[0.03] px-4 py-2.5 text-left text-xs transition-colors hover:bg-amber-500/10"
                                     >
                                         <div class="flex items-center gap-2">
-                                            <span class="font-bold text-slate-900 dark:text-white">
-                                                {{ r.first_name }} {{ r.last_name }}
+                                            <span
+                                                class="font-bold text-slate-900 dark:text-white"
+                                            >
+                                                {{ r.first_name }}
+                                                {{ r.last_name }}
                                             </span>
                                             <span
                                                 v-if="r.team"
@@ -420,10 +433,16 @@ const submit = () => {
                                             class="flex items-center gap-2.5 font-mono text-[11px]"
                                         >
                                             <span
-                                                v-if="getRacerActiveReg(r)?.clothespin_number"
+                                                v-if="
+                                                    getRacerActiveReg(r)
+                                                        ?.clothespin_number
+                                                "
                                                 class="rounded bg-amber-500 px-2 py-0.5 font-black text-slate-950 shadow-xs"
                                             >
-                                                Pin #{{ getRacerActiveReg(r)?.clothespin_number }}
+                                                Pin #{{
+                                                    getRacerActiveReg(r)
+                                                        ?.clothespin_number
+                                                }}
                                             </span>
                                             <span
                                                 class="rounded bg-slate-100 px-1.5 py-0.5 font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-400"
@@ -437,20 +456,24 @@ const submit = () => {
                                 <!-- Other / Not in Wave Racers (BELOW) -->
                                 <template v-if="otherRacers.length > 0">
                                     <div
-                                        class="bg-slate-100 px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:bg-slate-950 dark:text-slate-400"
+                                        class="bg-slate-100 px-3.5 py-1.5 text-[10px] font-bold tracking-wider text-slate-500 uppercase dark:bg-slate-950 dark:text-slate-400"
                                     >
-                                        Other Racers (Not Checked-In for Wave {{ selectedWave }})
+                                        Other Racers (Not Checked-In for Wave
+                                        {{ selectedWave }})
                                     </div>
                                     <button
                                         v-for="r in otherRacers"
                                         :key="'other-' + r.id"
                                         type="button"
                                         @click="selectRacerForQuickAdd(r)"
-                                        class="flex w-full items-center justify-between px-4 py-2.5 text-left text-xs opacity-75 transition-colors hover:opacity-100 hover:bg-amber-500/10"
+                                        class="flex w-full items-center justify-between px-4 py-2.5 text-left text-xs opacity-75 transition-colors hover:bg-amber-500/10 hover:opacity-100"
                                     >
                                         <div class="flex items-center gap-2">
-                                            <span class="font-bold text-slate-800 dark:text-slate-200">
-                                                {{ r.first_name }} {{ r.last_name }}
+                                            <span
+                                                class="font-bold text-slate-800 dark:text-slate-200"
+                                            >
+                                                {{ r.first_name }}
+                                                {{ r.last_name }}
                                             </span>
                                             <span
                                                 v-if="r.team"
@@ -463,10 +486,16 @@ const submit = () => {
                                             class="flex items-center gap-2.5 font-mono text-[11px]"
                                         >
                                             <span
-                                                v-if="getRacerActiveReg(r)?.clothespin_number"
+                                                v-if="
+                                                    getRacerActiveReg(r)
+                                                        ?.clothespin_number
+                                                "
                                                 class="rounded bg-slate-200 px-1.5 py-0.5 font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300"
                                             >
-                                                Pin #{{ getRacerActiveReg(r)?.clothespin_number }}
+                                                Pin #{{
+                                                    getRacerActiveReg(r)
+                                                        ?.clothespin_number
+                                                }}
                                             </span>
                                             <span
                                                 class="text-slate-400 dark:text-slate-500"
