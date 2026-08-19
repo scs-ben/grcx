@@ -8,6 +8,8 @@ import {
     Calendar,
     MapPin,
     Filter,
+    Users,
+    CheckCircle2,
 } from '@lucide/vue';
 import { ref, computed } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -29,6 +31,16 @@ interface Category {
     id: number;
     name: string;
     wave: string;
+}
+
+interface RaceRegistration {
+    id: number;
+    racer_id: number;
+    clothespin_number?: string;
+    is_checked_in: boolean;
+    is_season_pass: boolean;
+    racer: Racer;
+    categories?: Category[];
 }
 
 interface RaceResult {
@@ -56,9 +68,11 @@ const props = defineProps<{
     activeEvent?: Event;
     categories: Category[];
     resultsByCategory: Record<number, RaceResult[]>;
+    startListByCategory?: Record<number, RaceRegistration[]>;
 }>();
 
 const selectedEvent = ref(props.selectedEventId);
+const activeTab = ref<'results' | 'startlist'>('results');
 const selectedWave = ref<string>('ALL');
 const selectedCategoryFilter = ref<number | 'ALL'>('ALL');
 
@@ -124,6 +138,67 @@ const waveResults = computed(() => {
     // Filter displayed waves if a specific wave is selected
     if (selectedWave.value !== 'ALL') {
         const singleWaveMap: Record<string, RaceResult[]> = {};
+        singleWaveMap[selectedWave.value] =
+            waveGroups[selectedWave.value] || [];
+
+        return singleWaveMap;
+    }
+
+    return waveGroups;
+});
+
+// Group all registrations by Wave for Start List view
+const waveStartList = computed(() => {
+    const waveGroups: Record<
+        string,
+        Array<{ reg: RaceRegistration; category: Category }>
+    > = {
+        C: [],
+        A: [],
+        B: [],
+        Kids: [],
+    };
+
+    if (!props.startListByCategory) {
+        return waveGroups;
+    }
+
+    const startListMap = props.startListByCategory || {};
+
+    props.categories.forEach((cat) => {
+        if (
+            selectedCategoryFilter.value !== 'ALL' &&
+            cat.id !== selectedCategoryFilter.value
+        ) {
+            return;
+        }
+
+        const regList = startListMap[cat.id] || [];
+        regList.forEach((reg) => {
+            const wave = cat.wave || 'C';
+
+            if (!waveGroups[wave]) {
+                waveGroups[wave] = [];
+            }
+
+            waveGroups[wave].push({ reg, category: cat });
+        });
+    });
+
+    // Sort alphabetically by racer last name within each wave
+    for (const w in waveGroups) {
+        waveGroups[w].sort((a, b) =>
+            (a.reg.racer?.last_name || '').localeCompare(
+                b.reg.racer?.last_name || '',
+            ),
+        );
+    }
+
+    if (selectedWave.value !== 'ALL') {
+        const singleWaveMap: Record<
+            string,
+            Array<{ reg: RaceRegistration; category: Category }>
+        > = {};
         singleWaveMap[selectedWave.value] =
             waveGroups[selectedWave.value] || [];
 
@@ -206,29 +281,63 @@ const waveResults = computed(() => {
                         </div>
                     </div>
 
-                    <!-- Event Select Dropdown -->
+                    <!-- Mode Switcher Tabs & Event Dropdown -->
                     <div
-                        class="flex items-center gap-2 self-start sm:self-auto"
+                        class="flex flex-wrap items-center gap-3 self-start sm:self-auto"
                     >
-                        <label
-                            class="text-xs font-bold text-slate-700 dark:text-slate-300"
-                            >View Event:</label
+                        <div
+                            class="flex items-center rounded-xl border border-slate-200 bg-slate-100 p-1 dark:border-slate-800 dark:bg-slate-950"
                         >
-                        <select
-                            v-model="selectedEvent"
-                            @change="onEventChange"
-                            class="rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2 text-xs font-bold text-slate-900 shadow-xs focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
-                        >
-                            <option
-                                v-for="evt in events"
-                                :key="evt.id"
-                                :value="evt.id"
+                            <button
+                                type="button"
+                                @click="activeTab = 'results'"
+                                class="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all"
+                                :class="
+                                    activeTab === 'results'
+                                        ? 'bg-amber-500 text-slate-950 shadow-xs'
+                                        : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+                                "
                             >
-                                {{ evt.name }} ({{
-                                    evt.formatted_date || evt.event_date
-                                }})
-                            </option>
-                        </select>
+                                <Trophy class="h-3.5 w-3.5" />
+                                <span>Results</span>
+                            </button>
+                            <button
+                                type="button"
+                                @click="activeTab = 'startlist'"
+                                class="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all"
+                                :class="
+                                    activeTab === 'startlist'
+                                        ? 'bg-amber-500 text-slate-950 shadow-xs'
+                                        : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+                                "
+                            >
+                                <Users class="h-3.5 w-3.5" />
+                                <span>Pre-Race Start List</span>
+                            </button>
+                        </div>
+
+                        <!-- Event Select Dropdown -->
+                        <div class="flex items-center gap-2">
+                            <label
+                                class="text-xs font-bold text-slate-700 dark:text-slate-300"
+                                >Event:</label
+                            >
+                            <select
+                                v-model="selectedEvent"
+                                @change="onEventChange"
+                                class="rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2 text-xs font-bold text-slate-900 shadow-xs focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                            >
+                                <option
+                                    v-for="evt in events"
+                                    :key="evt.id"
+                                    :value="evt.id"
+                                >
+                                    {{ evt.name }} ({{
+                                        evt.formatted_date || evt.event_date
+                                    }})
+                                </option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
@@ -292,19 +401,20 @@ const waveResults = computed(() => {
                 </div>
 
                 <!-- Wave Results Tables -->
-                <div class="space-y-6">
+                <div v-if="activeTab === 'results'" class="space-y-6">
                     <div
                         v-for="(resultsList, waveName) in waveResults"
-                        :key="waveName"
+                        :key="'wave-res-' + waveName"
                         class="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800"
                     >
                         <div
-                            class="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-5 py-3 dark:border-slate-800 dark:bg-slate-950"
+                            class="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-6 py-3 dark:border-slate-800 dark:bg-slate-950"
                         >
                             <div class="flex items-center gap-2">
+                                <Trophy class="h-4 w-4 text-amber-500" />
                                 <span
-                                    class="text-sm font-black text-amber-600 dark:text-amber-400"
-                                    >Wave {{ waveName }}</span
+                                    class="text-sm font-black text-slate-900 dark:text-white"
+                                    >Wave {{ waveName }} Heat Results</span
                                 >
                             </div>
                             <span
@@ -420,6 +530,144 @@ const waveResults = computed(() => {
                         >
                             No Wave {{ waveName }} results recorded for this
                             event.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pre-Race Start List Tables (Grouped by Wave with Category Filter) -->
+                <div v-else class="space-y-6">
+                    <div
+                        v-for="(startEntries, waveName) in waveStartList"
+                        :key="'wave-start-' + waveName"
+                        class="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800"
+                    >
+                        <div
+                            class="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-6 py-3 dark:border-slate-800 dark:bg-slate-950"
+                        >
+                            <div class="flex items-center gap-2">
+                                <Users class="h-4 w-4 text-amber-500" />
+                                <span
+                                    class="text-sm font-black text-slate-900 dark:text-white"
+                                    >Wave {{ waveName }} Start List</span
+                                >
+                            </div>
+                            <span
+                                class="text-xs font-semibold text-slate-500 dark:text-slate-400"
+                            >
+                                {{ startEntries.length }} Registered Racers
+                            </span>
+                        </div>
+
+                        <div
+                            v-if="startEntries.length > 0"
+                            class="overflow-x-auto"
+                        >
+                            <table class="w-full text-left text-xs">
+                                <thead
+                                    class="border-b border-slate-200 bg-white font-semibold text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400"
+                                >
+                                    <tr>
+                                        <th class="px-5 py-3">Racer Name</th>
+                                        <th class="px-5 py-3">Category</th>
+                                        <th class="px-5 py-3">Bib #</th>
+                                        <th class="px-5 py-3">Team / Club</th>
+                                        <th class="px-5 py-3">Clothespin #</th>
+                                        <th class="px-5 py-3">Pass Type</th>
+                                        <th class="px-5 py-3 text-right">
+                                            Check-In Status
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody
+                                    class="divide-y divide-slate-100 text-slate-800 dark:divide-slate-800/60 dark:text-slate-200"
+                                >
+                                    <tr
+                                        v-for="item in startEntries"
+                                        :key="
+                                            item.reg.id + '-' + item.category.id
+                                        "
+                                        class="hover:bg-slate-50 dark:hover:bg-slate-800/40"
+                                    >
+                                        <td
+                                            class="px-5 py-3 font-bold text-slate-900 dark:text-white"
+                                        >
+                                            {{ item.reg.racer?.first_name }}
+                                            {{ item.reg.racer?.last_name }}
+                                        </td>
+                                        <td
+                                            class="px-5 py-3 font-bold text-amber-600 dark:text-amber-400"
+                                        >
+                                            {{ item.category.name }}
+                                        </td>
+                                        <td
+                                            class="px-5 py-3 font-mono font-bold text-slate-700 dark:text-slate-300"
+                                        >
+                                            #{{
+                                                item.reg.racer?.bib_number ||
+                                                '—'
+                                            }}
+                                        </td>
+                                        <td
+                                            class="px-5 py-3 font-medium text-slate-600 dark:text-slate-400"
+                                        >
+                                            {{
+                                                item.reg.racer?.team?.name ||
+                                                'Independent'
+                                            }}
+                                        </td>
+                                        <td
+                                            class="px-5 py-3 font-mono font-black text-amber-500"
+                                        >
+                                            {{
+                                                item.reg.clothespin_number
+                                                    ? 'Pin #' +
+                                                      item.reg.clothespin_number
+                                                    : '—'
+                                            }}
+                                        </td>
+                                        <td
+                                            class="px-5 py-3 font-medium text-slate-600 dark:text-slate-400"
+                                        >
+                                            <span
+                                                v-if="item.reg.is_season_pass"
+                                                class="rounded border border-purple-500/20 bg-purple-500/10 px-2 py-0.5 text-[10px] font-bold text-purple-600 dark:text-purple-400"
+                                            >
+                                                Season Pass
+                                            </span>
+                                            <span
+                                                v-else
+                                                class="text-[11px] text-slate-500"
+                                            >
+                                                Single Race
+                                            </span>
+                                        </td>
+                                        <td class="px-5 py-3 text-right">
+                                            <span
+                                                v-if="item.reg.is_checked_in"
+                                                class="inline-flex items-center gap-1 font-bold text-emerald-600 dark:text-emerald-400"
+                                            >
+                                                <CheckCircle2
+                                                    class="h-3.5 w-3.5 text-emerald-500"
+                                                />
+                                                Checked In
+                                            </span>
+                                            <span
+                                                v-else
+                                                class="rounded-full border border-slate-500/20 bg-slate-500/10 px-2 py-0.5 text-[10px] font-medium text-slate-500"
+                                            >
+                                                Registered
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div
+                            v-else
+                            class="p-6 text-center text-xs text-slate-500 italic dark:text-slate-400"
+                        >
+                            No Wave {{ waveName }} pre-race registrants found
+                            for this event.
                         </div>
                     </div>
                 </div>

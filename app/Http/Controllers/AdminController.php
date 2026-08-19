@@ -36,10 +36,29 @@ class AdminController extends Controller
 
         $activeEvent = Event::find($selectedEventId);
         $resultsByCategory = [];
+        $startListByCategory = [];
 
         if ($activeEvent) {
             $activeEvent->load(['results.racer.team', 'results.category']);
             $resultsByCategory = $activeEvent->results->groupBy('category_id');
+
+            $registrations = Registration::with(['racer.team', 'categories'])
+                ->where('status', 'approved')
+                ->where(function ($query) use ($activeEvent) {
+                    $query->where('event_id', $activeEvent->id)
+                        ->orWhere(function ($q) use ($activeEvent) {
+                            $q->where('is_season_pass', true)
+                                ->where('season_year', $activeEvent->season_year);
+                        });
+                })
+                ->get();
+
+            foreach ($registrations as $reg) {
+                /** @var Category $cat */
+                foreach ($reg->categories as $cat) {
+                    $startListByCategory[$cat->id][] = $reg;
+                }
+            }
         }
 
         return Inertia::render('Dashboard', [
@@ -48,6 +67,7 @@ class AdminController extends Controller
             'activeEvent' => $activeEvent,
             'categories' => $categories,
             'resultsByCategory' => $resultsByCategory,
+            'startListByCategory' => $startListByCategory,
         ]);
     }
 
