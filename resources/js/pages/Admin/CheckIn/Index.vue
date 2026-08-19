@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import { useForm, router } from '@inertiajs/vue3';
-import { UserCheck, Plus, CheckCircle2, Search, Calendar, Bike, Hash, DollarSign, X } from '@lucide/vue';
+import { UserCheck, Plus, CheckCircle2, Search, X } from '@lucide/vue';
 import { ref, computed } from 'vue';
 
 interface Event {

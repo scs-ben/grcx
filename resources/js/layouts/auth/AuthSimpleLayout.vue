@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { Bike } from '@lucide/vue';
 import { home } from '@/routes';
 
 defineProps<{

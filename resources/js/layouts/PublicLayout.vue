@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { Calendar, Trophy, UserCheck, FileText, LayoutDashboard, Bike, LogIn, Sun, Moon } from '@lucide/vue';
+import { UserCheck, LayoutDashboard, LogIn, Sun, Moon } from '@lucide/vue';
 import { computed } from 'vue';
 import { useAppearance } from '@/composables/useAppearance';
 
@@ -15,6 +15,7 @@ const isUrlActive = (url: string) => {
     if (url === '/') {
         return currentUrl.value === '/';
     }
+
     return currentUrl.value.startsWith(url);
 };
 
