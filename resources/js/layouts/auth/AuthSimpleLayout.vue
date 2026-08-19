@@ -16,10 +16,10 @@ defineProps<{
                 <!-- Brand Header -->
                 <div class="flex flex-col items-center gap-3 text-center">
                     <Link :href="home()" class="group flex items-center gap-3 font-black text-slate-900 dark:text-white text-xl tracking-tight">
-                        <div class="flex size-10 items-center justify-center rounded-xl bg-amber-500 text-slate-950 font-black shadow-md group-hover:scale-105 transition-transform">
-                            <Bike class="size-6 text-slate-950" />
+                        <div class="flex size-12 items-center justify-center rounded-2xl bg-yellow-400 p-1.5 shadow-md border border-red-600/40 group-hover:scale-105 transition-transform">
+                            <img src="/images/grcx-logo.png" alt="GRCX Logo" class="h-full w-full object-contain" />
                         </div>
-                        <span>Grand Rapids <span class="text-amber-600 dark:text-amber-400">CX 2026</span></span>
+                        <span>Grand Rapids <span class="text-yellow-500 font-black">CX 2026</span></span>
                     </Link>
                     <div class="space-y-1">
                         <h1 class="text-xl font-bold text-slate-900 dark:text-white">{{ title }}</h1>

@@ -22,15 +22,21 @@ defineProps<{
         <!-- Hero Section -->
         <section class="relative bg-slate-100 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 py-20 lg:py-28 overflow-hidden">
             <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#f59e0b_1px,transparent_1px)] [background-size:24px_24px]"></div>
-            
+
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                 <div class="max-w-3xl">
-                    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-semibold uppercase tracking-wider mb-6">
-                        <Bike class="w-4 h-4" /> 2026 Cyclocross Season
+                    <div class="inline-flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-yellow-400/20 border border-yellow-500/30 text-yellow-600 dark:text-yellow-400 text-xs font-black uppercase tracking-wider mb-6">
+                        <img src="/images/grcx-logo.png" alt="GRCX Logo" class="w-4 h-4 object-contain" />
+                        <span>2026 Cyclocross Season</span>
                     </div>
-                    <h1 class="text-4xl sm:text-6xl font-black text-slate-900 dark:text-white tracking-tight leading-tight mb-6">
-                        Grand Rapids <br/><span class="text-amber-500">Cyclocross</span> 2026
-                    </h1>
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-yellow-400 p-2 border-2 border-red-600/40 shadow-xl shrink-0 flex items-center justify-center">
+                            <img src="/images/grcx-logo.png" alt="GRCX Official Logo" class="h-full w-full object-contain" />
+                        </div>
+                        <h1 class="text-4xl sm:text-6xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
+                            Grand Rapids <br/><span class="text-yellow-500">Cyclocross</span> 2026
+                        </h1>
+                    </div>
                     <p class="text-lg sm:text-xl text-slate-600 dark:text-slate-300 mb-8 leading-relaxed">
                         3 epic race venues across Grand Rapids. 12 competitive scoring categories, single speed, BC open categories, youth & costume parades.
                     </p>
@@ -101,7 +107,7 @@ defineProps<{
                     <p class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed mb-4">
                         Turn in your bib clothes-pin at the finish line for instant live result entry and standings updates.
                     </p>
-                    <Link href="/page/schedule-and-rules" class="text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1">
+                    <Link href="/page/rules" class="text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1">
                         Read Race Rules <ArrowRight class="w-3.5 h-3.5" />
                     </Link>
                 </div>
