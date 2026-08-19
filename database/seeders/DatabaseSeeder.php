@@ -21,13 +21,13 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // 1. Admin Users
-        User::firstOrCreate(
-            ['email' => 'admin@grcx.com'],
-            [
-                'name' => 'GR CX Admin',
-                'password' => Hash::make('password'),
-            ]
-        );
+        // User::firstOrCreate(
+        //     ['email' => 'admin@grcx.com'],
+        //     [
+        //         'name' => 'GR CX Admin',
+        //         'password' => Hash::make('password'),
+        //     ]
+        // );
 
         User::firstOrCreate(
             ['email' => 'reeseman04@gmail.com'],
@@ -160,59 +160,59 @@ MARKDOWN,
         }
 
         // 5. Seed sample teams & racers
-        $team1 = Team::updateOrCreate(['name' => 'Speedy Spokes CX']);
-        $team2 = Team::updateOrCreate(['name' => 'Grand Rapids Mud Rollers']);
+        // $team1 = Team::updateOrCreate(['name' => 'Speedy Spokes CX']);
+        // $team2 = Team::updateOrCreate(['name' => 'Grand Rapids Mud Rollers']);
 
-        $sampleRacers = [
-            ['first_name' => 'Alex', 'last_name' => 'Vanderberg', 'email' => 'alex@example.com', 'bib_number' => '101', 'gender' => 'Open', 'team_id' => $team1->id],
-            ['first_name' => 'Samantha', 'last_name' => 'Miller', 'email' => 'sam@example.com', 'bib_number' => '102', 'gender' => 'Womens', 'team_id' => $team1->id],
-            ['first_name' => 'Chris', 'last_name' => 'Taylor', 'email' => 'chris@example.com', 'bib_number' => '103', 'gender' => 'Open', 'team_id' => $team2->id],
-            ['first_name' => 'Jordan', 'last_name' => 'Lee', 'email' => 'jordan@example.com', 'bib_number' => '104', 'gender' => 'Open', 'team_id' => $team2->id],
-        ];
+        // $sampleRacers = [
+        //     ['first_name' => 'Alex', 'last_name' => 'Vanderberg', 'email' => 'alex@example.com', 'bib_number' => '101', 'gender' => 'Open', 'team_id' => $team1->id],
+        //     ['first_name' => 'Samantha', 'last_name' => 'Miller', 'email' => 'sam@example.com', 'bib_number' => '102', 'gender' => 'Womens', 'team_id' => $team1->id],
+        //     ['first_name' => 'Chris', 'last_name' => 'Taylor', 'email' => 'chris@example.com', 'bib_number' => '103', 'gender' => 'Open', 'team_id' => $team2->id],
+        //     ['first_name' => 'Jordan', 'last_name' => 'Lee', 'email' => 'jordan@example.com', 'bib_number' => '104', 'gender' => 'Open', 'team_id' => $team2->id],
+        // ];
 
-        $racerModels = [];
-        foreach ($sampleRacers as $r) {
-            $racerModels[] = Racer::updateOrCreate(['bib_number' => $r['bib_number']], $r);
-        }
+        // $racerModels = [];
+        // foreach ($sampleRacers as $r) {
+        //     $racerModels[] = Racer::updateOrCreate(['bib_number' => $r['bib_number']], $r);
+        // }
 
-        // Register Alex & Samantha in A Open & A Womens
-        Registration::firstOrCreate([
-            'racer_id' => $racerModels[0]->id,
-            'event_id' => $eventModels[0]->id,
-            'category_id' => $categoryModels['A Open']->id,
-            'fee_type' => 'race',
-            'amount_paid' => 35.00,
-        ]);
+        // // Register Alex & Samantha in A Open & A Womens
+        // Registration::firstOrCreate([
+        //     'racer_id' => $racerModels[0]->id,
+        //     'event_id' => $eventModels[0]->id,
+        //     'category_id' => $categoryModels['A Open']->id,
+        //     'fee_type' => 'race',
+        //     'amount_paid' => 35.00,
+        // ]);
 
-        Registration::firstOrCreate([
-            'racer_id' => $racerModels[1]->id,
-            'event_id' => $eventModels[0]->id,
-            'category_id' => $categoryModels['A Womens']->id,
-            'fee_type' => 'race',
-            'amount_paid' => 35.00,
-        ]);
+        // Registration::firstOrCreate([
+        //     'racer_id' => $racerModels[1]->id,
+        //     'event_id' => $eventModels[0]->id,
+        //     'category_id' => $categoryModels['A Womens']->id,
+        //     'fee_type' => 'race',
+        //     'amount_paid' => 35.00,
+        // ]);
 
-        // Seed race results for Event 1
-        RaceResult::firstOrCreate([
-            'event_id' => $eventModels[0]->id,
-            'category_id' => $categoryModels['A Open']->id,
-            'racer_id' => $racerModels[0]->id,
-        ], [
-            'finish_position' => 1,
-            'laps_completed' => 5,
-            'finish_time' => '44:12',
-            'points_awarded' => RaceResult::pointsForPosition(1),
-        ]);
+        // // Seed race results for Event 1
+        // RaceResult::firstOrCreate([
+        //     'event_id' => $eventModels[0]->id,
+        //     'category_id' => $categoryModels['A Open']->id,
+        //     'racer_id' => $racerModels[0]->id,
+        // ], [
+        //     'finish_position' => 1,
+        //     'laps_completed' => 5,
+        //     'finish_time' => '44:12',
+        //     'points_awarded' => RaceResult::pointsForPosition(1),
+        // ]);
 
-        RaceResult::firstOrCreate([
-            'event_id' => $eventModels[0]->id,
-            'category_id' => $categoryModels['A Womens']->id,
-            'racer_id' => $racerModels[1]->id,
-        ], [
-            'finish_position' => 1,
-            'laps_completed' => 4,
-            'finish_time' => '46:05',
-            'points_awarded' => RaceResult::pointsForPosition(1),
-        ]);
+        // RaceResult::firstOrCreate([
+        //     'event_id' => $eventModels[0]->id,
+        //     'category_id' => $categoryModels['A Womens']->id,
+        //     'racer_id' => $racerModels[1]->id,
+        // ], [
+        //     'finish_position' => 1,
+        //     'laps_completed' => 4,
+        //     'finish_time' => '46:05',
+        //     'points_awarded' => RaceResult::pointsForPosition(1),
+        // ]);
     }
 }
