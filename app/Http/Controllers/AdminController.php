@@ -516,4 +516,9 @@ class AdminController extends Controller
 
         return redirect()->back()->with('success', 'Admin account deleted.');
     }
+
+    public function help(): Response
+    {
+        return Inertia::render('Admin/Help/Index');
+    }
 }

@@ -7,6 +7,7 @@ import {
     UserCheck,
     Calendar,
     Users,
+    HelpCircle,
 } from '@lucide/vue';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
@@ -59,6 +60,11 @@ const mainNavItems: NavItem[] = [
         title: 'Admin Users',
         href: '/admin/users',
         icon: Users,
+    },
+    {
+        title: 'Help & User Guide',
+        href: '/admin/help',
+        icon: HelpCircle,
     },
 ];
 
