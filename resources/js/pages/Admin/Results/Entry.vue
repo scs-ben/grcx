@@ -190,7 +190,7 @@ const handleQuickAdd = () => {
         racer_id: racerToAdd.id,
         category_id: catId,
         finish_position: nextPos,
-        laps_completed: defaultQuickAddLaps.value,
+        laps_completed: defaultQuickAddLaps.value ?? 1,
         finish_time: defaultQuickAddTime.value,
     });
 

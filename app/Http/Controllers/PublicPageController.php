@@ -155,10 +155,13 @@ class PublicPageController extends Controller
         $teamStandingsMap = [];
 
         foreach ($allResults as $res) {
-            if (! $res->racer || ! $res->racer->team) {
+            $racer = $res->racer;
+            if (! $racer || ! $racer->team) {
                 continue;
             }
-            $team = $res->racer->team;
+            $team = $racer->team;
+            $racerName = "{$racer->first_name} {$racer->last_name}";
+
             if (! isset($teamStandingsMap[$team->id])) {
                 $teamStandingsMap[$team->id] = [
                     'team' => $team,
@@ -168,14 +171,19 @@ class PublicPageController extends Controller
                 ];
             }
 
-            $teamStandingsMap[$team->id]['total_points'] += $res->points_awarded;
-            if (! in_array($res->racer->full_name, $teamStandingsMap[$team->id]['racers'])) {
-                $teamStandingsMap[$team->id]['racers'][] = $res->racer->full_name;
+            /** @var array{team: Team, total_points: int, racer_count: int, racers: array<string>} $teamData */
+            $teamData = $teamStandingsMap[$team->id];
+            $teamData['total_points'] += $res->points_awarded;
+
+            if (! in_array($racerName, $teamData['racers'], true)) {
+                $teamData['racers'][] = $racerName;
             }
+
+            $teamStandingsMap[$team->id] = $teamData;
         }
 
         $teamStandings = array_values($teamStandingsMap);
-        usort($teamStandings, fn ($a, $b) => $b['total_points'] <=> $a['total_points']);
+        usort($teamStandings, fn (array $a, array $b): int => $b['total_points'] <=> $a['total_points']);
 
         return Inertia::render('Standings/Index', [
             'categories' => $categories,

@@ -55,16 +55,25 @@ class RaceResult extends Model
         return $scale[$position] ?? 0;
     }
 
+    /**
+     * @return BelongsTo<Event, $this>
+     */
     public function event(): BelongsTo
     {
         return $this->belongsTo(Event::class);
     }
 
+    /**
+     * @return BelongsTo<Category, $this>
+     */
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
     }
 
+    /**
+     * @return BelongsTo<Racer, $this>
+     */
     public function racer(): BelongsTo
     {
         return $this->belongsTo(Racer::class);

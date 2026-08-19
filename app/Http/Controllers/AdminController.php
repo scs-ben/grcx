@@ -9,8 +9,10 @@ use App\Models\Racer;
 use App\Models\RaceResult;
 use App\Models\Registration;
 use App\Models\Team;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -451,5 +453,67 @@ class AdminController extends Controller
         $category->delete();
 
         return redirect()->back()->with('success', 'Category deleted.');
+    }
+
+    public function users(): Response
+    {
+        $users = User::query()
+            ->orderBy('name')
+            ->get(['id', 'name', 'email', 'created_at']);
+
+        return Inertia::render('Admin/Users/Index', [
+            'users' => $users,
+        ]);
+    }
+
+    public function storeUser(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
+            'email_verified_at' => now(),
+        ]);
+
+        return redirect()->back()->with('success', 'Admin account created successfully.');
+    }
+
+    public function updateUser(Request $request, User $user): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email,'.$user->id],
+            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        $updateData = [
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+        ];
+
+        if (! empty($validated['password'])) {
+            $updateData['password'] = Hash::make($validated['password']);
+        }
+
+        $user->update($updateData);
+
+        return redirect()->back()->with('success', 'Admin account updated successfully.');
+    }
+
+    public function deleteUser(Request $request, User $user): RedirectResponse
+    {
+        if ($user->id === $request->user()->id) {
+            return redirect()->back()->with('error', 'You cannot delete your own admin account.');
+        }
+
+        $user->delete();
+
+        return redirect()->back()->with('success', 'Admin account deleted.');
     }
 }

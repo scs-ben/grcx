@@ -30,7 +30,7 @@ class Event extends Model
 
     public function getFormattedDateAttribute(): string
     {
-        return $this->event_date ? $this->event_date->format('M j, Y') : '';
+        return $this->event_date->format('M j, Y');
     }
 
     public function registrations(): HasMany

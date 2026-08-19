@@ -31,16 +31,25 @@ class Racer extends Model
         return "{$this->first_name} {$this->last_name}";
     }
 
+    /**
+     * @return BelongsTo<Team, $this>
+     */
     public function team(): BelongsTo
     {
         return $this->belongsTo(Team::class);
     }
 
+    /**
+     * @return HasMany<Registration, $this>
+     */
     public function registrations(): HasMany
     {
         return $this->hasMany(Registration::class);
     }
 
+    /**
+     * @return HasMany<RaceResult, $this>
+     */
     public function results(): HasMany
     {
         return $this->hasMany(RaceResult::class);
