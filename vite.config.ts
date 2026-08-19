@@ -18,7 +18,11 @@ export default defineConfig({
                 }),
             ],
         }),
-        inertia(),
+        inertia({
+            ssr: {
+                port: 13715, //
+            },
+        }),
         tailwindcss(),
         vue({
             template: {
