@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import PublicLayout from '@/layouts/PublicLayout.vue';
-import { Calendar, MapPin, Trophy, Search, Filter } from '@lucide/vue';
 import { router } from '@inertiajs/vue3';
+import { Calendar, MapPin, Trophy, Search, Filter } from '@lucide/vue';
 import { ref, computed } from 'vue';
+import PublicLayout from '@/layouts/PublicLayout.vue';
 
 interface Team {
     id: number;
@@ -63,12 +63,19 @@ const selectedCategoryFilter = ref<number | 'ALL'>('ALL');
 const wavesList = ['ALL', 'C', 'A', 'B', 'Kids'];
 
 const onEventChange = () => {
-    router.get('/results', { event_id: selectedEvent.value }, { preserveState: false });
+    router.get(
+        '/results',
+        { event_id: selectedEvent.value },
+        { preserveState: false },
+    );
 };
 
 // Filter categories available under selected wave filter
 const availableCategoryFilters = computed(() => {
-    if (selectedWave.value === 'ALL') return props.categories;
+    if (selectedWave.value === 'ALL') {
+        return props.categories;
+    }
+
     return props.categories.filter((c) => c.wave === selectedWave.value);
 });
 
@@ -76,6 +83,7 @@ const availableCategoryFilters = computed(() => {
 const waveResults = computed(() => {
     // Flatten all results across all categories
     const allResults: RaceResult[] = [];
+
     for (const catId in props.resultsByCategory) {
         allResults.push(...props.resultsByCategory[catId]);
     }
@@ -83,18 +91,32 @@ const waveResults = computed(() => {
     // Apply Racer Search Filter
     const searchQ = racerSearch.value.toLowerCase().trim();
     const searchedResults = allResults.filter((res) => {
-        if (!searchQ) return true;
-        const name = `${res.racer?.first_name} ${res.racer?.last_name}`.toLowerCase();
+        if (!searchQ) {
+            return true;
+        }
+
+        const name =
+            `${res.racer?.first_name} ${res.racer?.last_name}`.toLowerCase();
         const bib = res.racer?.bib_number || '';
         const pin = res.racer?.registrations?.[0]?.clothespin_number || '';
         const team = res.racer?.team?.name?.toLowerCase() || '';
         const catName = res.category?.name?.toLowerCase() || '';
-        return name.includes(searchQ) || bib.includes(searchQ) || pin.includes(searchQ) || team.includes(searchQ) || catName.includes(searchQ);
+
+        return (
+            name.includes(searchQ) ||
+            bib.includes(searchQ) ||
+            pin.includes(searchQ) ||
+            team.includes(searchQ) ||
+            catName.includes(searchQ)
+        );
     });
 
     // Apply Category Filter if specific category selected
     const filteredResults = searchedResults.filter((res) => {
-        if (selectedCategoryFilter.value === 'ALL') return true;
+        if (selectedCategoryFilter.value === 'ALL') {
+            return true;
+        }
+
         return res.category_id === selectedCategoryFilter.value;
     });
 
@@ -108,9 +130,11 @@ const waveResults = computed(() => {
 
     filteredResults.forEach((res) => {
         const wave = res.category?.wave || 'C';
+
         if (!waveGroups[wave]) {
             waveGroups[wave] = [];
         }
+
         waveGroups[wave].push(res);
     });
 
@@ -122,7 +146,9 @@ const waveResults = computed(() => {
     // Filter displayed waves if a specific wave is selected
     if (selectedWave.value !== 'ALL') {
         const singleWaveMap: Record<string, RaceResult[]> = {};
-        singleWaveMap[selectedWave.value] = waveGroups[selectedWave.value] || [];
+        singleWaveMap[selectedWave.value] =
+            waveGroups[selectedWave.value] || [];
+
         return singleWaveMap;
     }
 
@@ -132,46 +158,93 @@ const waveResults = computed(() => {
 
 <template>
     <PublicLayout>
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-10">
+        <div class="mx-auto max-w-7xl space-y-10 px-4 py-12 sm:px-6 lg:px-8">
             <!-- Header Banner -->
-            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div
+                class="flex flex-col justify-between gap-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 md:flex-row md:items-center dark:border-slate-800 dark:bg-slate-900"
+            >
                 <div>
-                    <span class="text-xs font-black uppercase tracking-wider bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 px-3 py-1 rounded-full">
+                    <span
+                        class="rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-xs font-black tracking-wider text-amber-600 uppercase dark:text-amber-400"
+                    >
                         Live Official Race Results
                     </span>
-                    <h1 class="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white mt-3 mb-2">
-                        {{ activeEvent?.name || 'Grand Rapids Cyclocross Results' }}
+                    <h1
+                        class="mt-3 mb-2 text-3xl font-black text-slate-900 sm:text-4xl dark:text-white"
+                    >
+                        {{
+                            activeEvent?.name ||
+                            'Grand Rapids Cyclocross Results'
+                        }}
                     </h1>
-                    <div class="flex flex-wrap items-center gap-4 text-xs font-semibold text-slate-600 dark:text-slate-400">
-                        <span class="flex items-center gap-1.5"><Calendar class="w-4 h-4 text-amber-500" /> {{ activeEvent?.formatted_date || activeEvent?.event_date }}</span>
-                        <span class="flex items-center gap-1.5"><MapPin class="w-4 h-4 text-amber-500" /> {{ activeEvent?.location }}</span>
+                    <div
+                        class="flex flex-wrap items-center gap-4 text-xs font-semibold text-slate-600 dark:text-slate-400"
+                    >
+                        <span class="flex items-center gap-1.5"
+                            ><Calendar class="h-4 w-4 text-amber-500" />
+                            {{
+                                activeEvent?.formatted_date ||
+                                activeEvent?.event_date
+                            }}</span
+                        >
+                        <span class="flex items-center gap-1.5"
+                            ><MapPin class="h-4 w-4 text-amber-500" />
+                            {{ activeEvent?.location }}</span
+                        >
                     </div>
                 </div>
 
                 <!-- Event Dropdown Switcher -->
                 <div class="flex flex-col gap-1.5 self-start md:self-auto">
-                    <label class="text-xs font-bold text-slate-700 dark:text-slate-300">Select Race Event:</label>
-                    <select v-model="selectedEvent" @change="onEventChange" class="bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:border-amber-500 shadow-sm">
-                        <option v-for="evt in events" :key="evt.id" :value="evt.id">
-                            {{ evt.name }} ({{ evt.formatted_date || evt.event_date }})
+                    <label
+                        class="text-xs font-bold text-slate-700 dark:text-slate-300"
+                        >Select Race Event:</label
+                    >
+                    <select
+                        v-model="selectedEvent"
+                        @change="onEventChange"
+                        class="rounded-xl border border-slate-300 bg-slate-50 px-4 py-2.5 text-xs font-bold text-slate-900 shadow-sm focus:border-amber-500 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                    >
+                        <option
+                            v-for="evt in events"
+                            :key="evt.id"
+                            :value="evt.id"
+                        >
+                            {{ evt.name }} ({{
+                                evt.formatted_date || evt.event_date
+                            }})
                         </option>
                     </select>
                 </div>
             </div>
 
             <!-- Filters Bar: Wave Tabs, Category Filter & Search -->
-            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div
+                class="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+            >
+                <div
+                    class="flex flex-col justify-between gap-4 md:flex-row md:items-center"
+                >
                     <!-- Wave Selector Tabs -->
                     <div class="flex flex-wrap items-center gap-2">
-                        <span class="text-xs font-bold text-slate-500 dark:text-slate-400 mr-1 hidden sm:inline">Waves:</span>
+                        <span
+                            class="mr-1 hidden text-xs font-bold text-slate-500 sm:inline dark:text-slate-400"
+                            >Waves:</span
+                        >
                         <button
                             v-for="w in wavesList"
                             :key="w"
                             type="button"
-                            @click="selectedWave = w; selectedCategoryFilter = 'ALL'"
-                            class="px-4 py-2 rounded-xl text-xs font-black transition-all"
-                            :class="selectedWave === w ? 'bg-amber-500 text-slate-950 shadow-sm' : 'bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800'"
+                            @click="
+                                selectedWave = w;
+                                selectedCategoryFilter = 'ALL';
+                            "
+                            class="rounded-xl px-4 py-2 text-xs font-black transition-all"
+                            :class="
+                                selectedWave === w
+                                    ? 'bg-amber-500 text-slate-950 shadow-sm'
+                                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-950 dark:text-slate-300 dark:hover:bg-slate-800'
+                            "
                         >
                             {{ w === 'ALL' ? 'All Waves' : 'Wave ' + w }}
                         </button>
@@ -179,26 +252,44 @@ const waveResults = computed(() => {
 
                     <!-- Search Input -->
                     <div class="relative w-full md:w-72">
-                        <Search class="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                        <Search
+                            class="absolute top-3 left-3.5 h-4 w-4 text-slate-400"
+                        />
                         <input
                             v-model="racerSearch"
                             type="text"
                             placeholder="Search racer, bib #, pin #..."
-                            class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-amber-500 shadow-sm"
+                            class="w-full rounded-xl border border-slate-300 bg-slate-50 py-2 pr-4 pl-10 text-xs text-slate-900 shadow-sm focus:border-amber-500 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
                         />
                     </div>
                 </div>
 
                 <!-- Category Filter Dropdown -->
-                <div class="flex items-center gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
-                    <Filter class="w-4 h-4 text-amber-500 shrink-0" />
-                    <label class="text-xs font-bold text-slate-700 dark:text-slate-300 whitespace-nowrap">Filter by Category:</label>
+                <div
+                    class="flex items-center gap-3 border-t border-slate-100 pt-3 dark:border-slate-800"
+                >
+                    <Filter class="h-4 w-4 shrink-0 text-amber-500" />
+                    <label
+                        class="text-xs font-bold whitespace-nowrap text-slate-700 dark:text-slate-300"
+                        >Filter by Category:</label
+                    >
                     <select
                         v-model="selectedCategoryFilter"
-                        class="bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:border-amber-500 max-w-xs shadow-xs"
+                        class="max-w-xs rounded-xl border border-slate-300 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-900 shadow-xs focus:border-amber-500 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
                     >
-                        <option value="ALL">All Categories {{ selectedWave !== 'ALL' ? 'in Wave ' + selectedWave : '' }}</option>
-                        <option v-for="cat in availableCategoryFilters" :key="cat.id" :value="cat.id">
+                        <option value="ALL">
+                            All Categories
+                            {{
+                                selectedWave !== 'ALL'
+                                    ? 'in Wave ' + selectedWave
+                                    : ''
+                            }}
+                        </option>
+                        <option
+                            v-for="cat in availableCategoryFilters"
+                            :key="cat.id"
+                            :value="cat.id"
+                        >
                             {{ cat.name }} (Wave {{ cat.wave }})
                         </option>
                     </select>
@@ -207,20 +298,34 @@ const waveResults = computed(() => {
 
             <!-- Wave Results Tables -->
             <div class="space-y-10">
-                <div v-for="(resultsList, waveName) in waveResults" :key="waveName" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
-                    <div class="bg-slate-50 dark:bg-slate-800/80 px-6 py-4 flex items-center justify-between border-b border-slate-200 dark:border-slate-800">
+                <div
+                    v-for="(resultsList, waveName) in waveResults"
+                    :key="waveName"
+                    class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900"
+                >
+                    <div
+                        class="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-6 py-4 dark:border-slate-800 dark:bg-slate-800/80"
+                    >
                         <div class="flex items-center gap-3">
-                            <Trophy class="w-5 h-5 text-amber-500" />
-                            <h2 class="text-lg font-black text-slate-900 dark:text-white">Wave {{ waveName }} Results</h2>
+                            <Trophy class="h-5 w-5 text-amber-500" />
+                            <h2
+                                class="text-lg font-black text-slate-900 dark:text-white"
+                            >
+                                Wave {{ waveName }} Results
+                            </h2>
                         </div>
-                        <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                        <span
+                            class="text-xs font-medium text-slate-500 dark:text-slate-400"
+                        >
                             {{ resultsList.length }} Finishers
                         </span>
                     </div>
 
                     <div v-if="resultsList.length > 0" class="overflow-x-auto">
                         <table class="w-full text-left text-xs">
-                            <thead class="bg-slate-50 dark:bg-slate-950/50 text-slate-600 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800">
+                            <thead
+                                class="border-b border-slate-200 bg-slate-50 font-semibold text-slate-600 dark:border-slate-800 dark:bg-slate-950/50 dark:text-slate-400"
+                            >
                                 <tr>
                                     <th class="px-6 py-3">Finish Pos</th>
                                     <th class="px-6 py-3">Category</th>
@@ -233,33 +338,101 @@ const waveResults = computed(() => {
                                     <th class="px-6 py-3 text-right">Points</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800/50 text-slate-800 dark:text-slate-200">
-                                <tr v-for="res in resultsList" :key="res.id" class="hover:bg-slate-50 dark:hover:bg-slate-800/30">
-                                    <td class="px-6 py-3.5 font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                                        <span v-if="res.finish_position === 1" class="w-5 h-5 rounded-full bg-amber-500 text-slate-950 font-black flex items-center justify-center text-[10px]">1</span>
-                                        <span v-else-if="res.finish_position === 2" class="w-5 h-5 rounded-full bg-slate-300 text-slate-950 font-black flex items-center justify-center text-[10px]">2</span>
-                                        <span v-else-if="res.finish_position === 3" class="w-5 h-5 rounded-full bg-amber-700 text-slate-100 font-black flex items-center justify-center text-[10px]">3</span>
-                                        <span v-else class="text-slate-500 dark:text-slate-400 ml-1">{{ res.finish_position }}</span>
+                            <tbody
+                                class="divide-y divide-slate-100 text-slate-800 dark:divide-slate-800/50 dark:text-slate-200"
+                            >
+                                <tr
+                                    v-for="res in resultsList"
+                                    :key="res.id"
+                                    class="hover:bg-slate-50 dark:hover:bg-slate-800/30"
+                                >
+                                    <td
+                                        class="flex items-center gap-2 px-6 py-3.5 font-black text-slate-900 dark:text-slate-100"
+                                    >
+                                        <span
+                                            v-if="res.finish_position === 1"
+                                            class="flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-[10px] font-black text-slate-950"
+                                            >1</span
+                                        >
+                                        <span
+                                            v-else-if="
+                                                res.finish_position === 2
+                                            "
+                                            class="flex h-5 w-5 items-center justify-center rounded-full bg-slate-300 text-[10px] font-black text-slate-950"
+                                            >2</span
+                                        >
+                                        <span
+                                            v-else-if="
+                                                res.finish_position === 3
+                                            "
+                                            class="flex h-5 w-5 items-center justify-center rounded-full bg-amber-700 text-[10px] font-black text-slate-100"
+                                            >3</span
+                                        >
+                                        <span
+                                            v-else
+                                            class="ml-1 text-slate-500 dark:text-slate-400"
+                                            >{{ res.finish_position }}</span
+                                        >
                                     </td>
-                                    <td class="px-6 py-3.5 font-bold text-amber-600 dark:text-amber-400">
+                                    <td
+                                        class="px-6 py-3.5 font-bold text-amber-600 dark:text-amber-400"
+                                    >
                                         {{ res.category?.name }}
                                     </td>
-                                    <td class="px-6 py-3.5 font-mono text-slate-700 dark:text-slate-300 font-bold">#{{ res.racer?.bib_number || '—' }}</td>
-                                    <td class="px-6 py-3.5 font-mono text-amber-500 font-black">
-                                        {{ res.racer?.registrations?.[0]?.clothespin_number ? 'Pin #' + res.racer.registrations[0].clothespin_number : '—' }}
+                                    <td
+                                        class="px-6 py-3.5 font-mono font-bold text-slate-700 dark:text-slate-300"
+                                    >
+                                        #{{ res.racer?.bib_number || '—' }}
                                     </td>
-                                    <td class="px-6 py-3.5 font-medium text-slate-900 dark:text-white">{{ res.racer?.first_name }} {{ res.racer?.last_name }}</td>
-                                    <td class="px-6 py-3.5 font-semibold text-slate-700 dark:text-slate-300">
-                                        {{ res.racer?.team?.name || 'Independent' }}
+                                    <td
+                                        class="px-6 py-3.5 font-mono font-black text-amber-500"
+                                    >
+                                        {{
+                                            res.racer?.registrations?.[0]
+                                                ?.clothespin_number
+                                                ? 'Pin #' +
+                                                  res.racer.registrations[0]
+                                                      .clothespin_number
+                                                : '—'
+                                        }}
                                     </td>
-                                    <td class="px-6 py-3.5 text-slate-600 dark:text-slate-400">{{ res.laps_completed }}</td>
-                                    <td class="px-6 py-3.5 font-mono text-slate-700 dark:text-slate-300">{{ res.finish_time || '—' }}</td>
-                                    <td class="px-6 py-3.5 text-right font-bold text-emerald-600 dark:text-emerald-400">+{{ res.points_awarded }} pts</td>
+                                    <td
+                                        class="px-6 py-3.5 font-medium text-slate-900 dark:text-white"
+                                    >
+                                        {{ res.racer?.first_name }}
+                                        {{ res.racer?.last_name }}
+                                    </td>
+                                    <td
+                                        class="px-6 py-3.5 font-semibold text-slate-700 dark:text-slate-300"
+                                    >
+                                        {{
+                                            res.racer?.team?.name ||
+                                            'Independent'
+                                        }}
+                                    </td>
+                                    <td
+                                        class="px-6 py-3.5 text-slate-600 dark:text-slate-400"
+                                    >
+                                        {{ res.laps_completed }}
+                                    </td>
+                                    <td
+                                        class="px-6 py-3.5 font-mono text-slate-700 dark:text-slate-300"
+                                    >
+                                        {{ res.finish_time || '—' }}
+                                    </td>
+                                    <td
+                                        class="px-6 py-3.5 text-right font-bold text-emerald-600 dark:text-emerald-400"
+                                    >
+                                        +{{ res.points_awarded }} pts
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
-                    <div v-else class="p-6 text-center text-xs text-slate-500 dark:text-slate-400 italic">
+                    <div
+                        v-else
+                        class="p-6 text-center text-xs text-slate-500 italic dark:text-slate-400"
+                    >
                         No Wave {{ waveName }} results recorded for this event.
                     </div>
                 </div>

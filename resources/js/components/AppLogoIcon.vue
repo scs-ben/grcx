@@ -13,7 +13,15 @@ defineProps<Props>();
 </script>
 
 <template>
-    <div :class="className" class="overflow-hidden flex items-center justify-center shrink-0" v-bind="$attrs">
-        <img src="/images/grcx-logo.png" alt="GRCX Logo" class="h-full w-full object-contain" />
+    <div
+        :class="className"
+        class="flex shrink-0 items-center justify-center overflow-hidden"
+        v-bind="$attrs"
+    >
+        <img
+            src="/images/grcx-logo.png"
+            alt="GRCX Logo"
+            class="h-full w-full object-contain"
+        />
     </div>
 </template>
