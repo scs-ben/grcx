@@ -42,3 +42,10 @@ jobs:
       - name: Run CI Checks
         run: composer ci:check
 
+      - name: Trigger Laravel Forge Deployment
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: curl -sS "${FORGE_DEPLOY_HOOK}"
+        env:
+          FORGE_DEPLOY_HOOK: ${{ secrets.FORGE_DEPLOY_HOOK || 'https://forge.laravel.com/servers/768845/sites/3345175/deploy/http?token=fLpRNgLdADY9Swb8zzgrY0Jz183gpFzf55EqPbAa' }}
+
+
