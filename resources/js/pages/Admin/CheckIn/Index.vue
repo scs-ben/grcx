@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useForm, router } from '@inertiajs/vue3';
 import { UserCheck, Plus, CheckCircle2, Search, X } from '@lucide/vue';
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 
 interface Event {
@@ -18,12 +18,20 @@ interface Category {
     wave: string;
 }
 
+interface Team {
+    id: number;
+    name: string;
+}
+
 interface Racer {
     id: number;
     first_name: string;
     last_name: string;
     email: string;
+    phone: string;
     bib_number: string;
+    team_id?: number;
+    team?: Team;
 }
 
 interface Registration {
@@ -35,7 +43,7 @@ interface Registration {
     clothespin_number: string | null;
     is_checked_in: boolean;
     racer: Racer;
-    category: Category;
+    categories: Category[];
     event?: Event;
 }
 
@@ -45,6 +53,7 @@ const props = defineProps<{
     registrations: Registration[];
     categories: Category[];
     racers: Racer[];
+    teams?: Team[];
     waves?: string[];
 }>();
 
@@ -85,15 +94,37 @@ const checkInForm = useForm({
     clothespin_number: '',
     bib_number: '',
     waves: [] as string[],
+    category_ids: [] as number[],
 });
+
+const checkInAvailableCategories = computed(() => {
+    if (!checkInForm.waves || checkInForm.waves.length === 0) {
+        return props.categories;
+    }
+    return props.categories.filter((c) => checkInForm.waves.includes(c.wave));
+});
+
+const toggleWaveForCheckIn = (wave: string) => {
+    if (checkInForm.waves.includes(wave)) {
+        checkInForm.waves = checkInForm.waves.filter((w) => w !== wave);
+    } else {
+        checkInForm.waves.push(wave);
+    }
+
+    const validCatIds = new Set(checkInAvailableCategories.value.map((c) => c.id));
+    checkInForm.category_ids = checkInForm.category_ids.filter((id) =>
+        validCatIds.has(id),
+    );
+};
 
 const openCheckIn = (reg: Registration) => {
     checkingInReg.value = reg;
     checkInForm.clothespin_number = reg.clothespin_number || '';
     checkInForm.bib_number = reg.racer?.bib_number || '';
-    // Pre-select registration category wave
-    const initialWave = reg.category?.wave || 'C';
-    checkInForm.waves = [initialWave];
+    checkInForm.category_ids = (reg.categories || []).map((c) => c.id);
+    // Pre-select registration categories' waves
+    const waves = Array.from(new Set((reg.categories || []).map((c) => c.wave)));
+    checkInForm.waves = waves.length > 0 ? waves : ['C'];
 };
 
 const closeCheckIn = () => {
@@ -112,27 +143,133 @@ const submitCheckIn = () => {
 
 // Day-Of Registration Modal
 const showDayOfModal = ref(false);
+const isDayOfNameDropdownOpen = ref(false);
 
 const dayOfForm = useForm({
     event_id: props.selectedEventId,
+    racer_option: 'new' as 'new' | 'existing',
+    racer_id: null as number | null,
     first_name: '',
     last_name: '',
     email: '',
     bib_number: '',
+    team_id: null as number | null,
+    new_team_name: '',
     clothespin_number: '',
-    category_id: props.categories[0]?.id || 1,
+    waves: ['C'] as string[],
+    category_ids: [] as number[],
     fee_type: 'race',
     payment_method: 'cash',
     amount_paid: 35.0,
-    waves: ['C'] as string[],
 });
+
+const getFeeAmount = (feeType: string): number => {
+    if (feeType === 'season') {
+        return 70.0;
+    }
+    if (feeType === 'youth') {
+        return 20.0;
+    }
+    if (feeType === 'race') {
+        return 35.0;
+    }
+    return 0.0; // bc, kids, costume, etc.
+};
+
+watch(
+    () => dayOfForm.fee_type,
+    (newFeeType) => {
+        dayOfForm.amount_paid = getFeeAmount(newFeeType);
+    },
+);
+
+const matchingRacers = computed(() => {
+    const fn = dayOfForm.first_name.trim().toLowerCase();
+    const ln = dayOfForm.last_name.trim().toLowerCase();
+
+    if (!fn && !ln) {
+        return [];
+    }
+
+    return props.racers.filter((r) => {
+        const rFn = r.first_name.toLowerCase();
+        const rLn = r.last_name.toLowerCase();
+        const bib = (r.bib_number || '').toLowerCase();
+
+        if (fn && ln) {
+            return (rFn.includes(fn) && rLn.includes(ln)) || bib.includes(fn) || bib.includes(ln);
+        }
+        if (fn) {
+            return rFn.includes(fn) || `${rFn} ${rLn}`.includes(fn) || bib.includes(fn);
+        }
+        return rLn.includes(ln) || bib.includes(ln);
+    });
+});
+
+const selectExistingRacerForDayOf = (r: Racer) => {
+    dayOfForm.racer_option = 'existing';
+    dayOfForm.racer_id = r.id;
+    dayOfForm.first_name = r.first_name;
+    dayOfForm.last_name = r.last_name;
+    dayOfForm.email = r.email || '';
+    dayOfForm.bib_number = r.bib_number || '';
+    dayOfForm.team_id = r.team_id || null;
+    isDayOfNameDropdownOpen.value = false;
+};
+
+const onDayOfNameInput = () => {
+    if (dayOfForm.racer_option === 'existing') {
+        dayOfForm.racer_option = 'new';
+        dayOfForm.racer_id = null;
+    }
+    isDayOfNameDropdownOpen.value = true;
+};
+
+// Categories filtered by selected waves
+const dayOfAvailableCategories = computed(() => {
+    if (!dayOfForm.waves || dayOfForm.waves.length === 0) {
+        return props.categories;
+    }
+
+    return props.categories.filter((c) => dayOfForm.waves.includes(c.wave));
+});
+
+const toggleWaveForDayOf = (wave: string) => {
+    if (dayOfForm.waves.includes(wave)) {
+        dayOfForm.waves = dayOfForm.waves.filter((w) => w !== wave);
+    } else {
+        dayOfForm.waves.push(wave);
+    }
+
+    // Filter out selected categories that no longer belong to selected waves
+    const validCatIds = new Set(
+        dayOfAvailableCategories.value.map((c) => c.id),
+    );
+    dayOfForm.category_ids = dayOfForm.category_ids.filter((id) =>
+        validCatIds.has(id),
+    );
+};
 
 const submitDayOf = () => {
     dayOfForm.event_id = selectedEvent.value;
+
+    if (dayOfForm.racer_option === 'existing' && !dayOfForm.racer_id) {
+        alert('Please search and select an existing racer.');
+        return;
+    }
+
+    if (dayOfForm.category_ids.length === 0) {
+        alert('Please select at least one race category.');
+
+        return;
+    }
+
     dayOfForm.post('/admin/check-in/day-of', {
         onSuccess: () => {
             showDayOfModal.value = false;
             dayOfForm.reset();
+            dayOfRacerSearch.value = '';
+            isDayOfRacerDropdownOpen.value = false;
         },
     });
 };
@@ -279,11 +416,15 @@ const submitDayOf = () => {
                             <td class="px-6 py-4">
                                 <span
                                     class="font-medium text-slate-900 dark:text-slate-100"
-                                    >{{ r.category?.name }}</span
+                                    >{{
+                                        (r.categories || []).map((c) => c.name).join(', ') || 'None'
+                                    }}</span
                                 >
                                 <span
                                     class="block font-mono text-[10px] text-slate-500 dark:text-slate-400"
-                                    >Wave {{ r.category?.wave }}</span
+                                    >Wave {{
+                                        Array.from(new Set((r.categories || []).map((c) => c.wave))).join(', ') || 'N/A'
+                                    }}</span
                                 >
                             </td>
                             <td class="px-6 py-4">
@@ -388,12 +529,60 @@ const submitDayOf = () => {
                                     <input
                                         type="checkbox"
                                         :value="w"
-                                        v-model="checkInForm.waves"
+                                        :checked="checkInForm.waves.includes(w)"
+                                        @change="toggleWaveForCheckIn(w)"
                                         class="rounded text-amber-500 focus:ring-amber-500"
                                     />
                                     <span>Wave {{ w }}</span>
                                 </label>
                             </div>
+                        </div>
+
+                        <!-- Category Checklist -->
+                        <div>
+                            <label
+                                class="mb-1 block font-semibold text-slate-700 dark:text-slate-300"
+                                >Confirm Race Categories *</label
+                            >
+                            <div
+                                class="max-h-44 space-y-1.5 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950"
+                            >
+                                <label
+                                    v-for="cat in checkInAvailableCategories"
+                                    :key="cat.id"
+                                    class="flex cursor-pointer items-center justify-between rounded-lg p-1.5 transition-colors hover:bg-slate-200/60 dark:hover:bg-slate-900"
+                                >
+                                    <div class="flex items-center gap-2">
+                                        <input
+                                            type="checkbox"
+                                            :value="cat.id"
+                                            v-model="checkInForm.category_ids"
+                                            class="rounded text-amber-500 focus:ring-amber-500"
+                                        />
+                                        <span
+                                            class="font-bold text-slate-900 dark:text-white"
+                                            >{{ cat.name }}</span
+                                        >
+                                    </div>
+                                    <span
+                                        class="rounded bg-slate-200 px-1.5 py-0.5 font-mono text-[10px] text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                                    >
+                                        Wave {{ cat.wave }}
+                                    </span>
+                                </label>
+                                <div
+                                    v-if="checkInAvailableCategories.length === 0"
+                                    class="py-2 text-center text-xs text-slate-500"
+                                >
+                                    No categories available for selected waves.
+                                </div>
+                            </div>
+                            <p
+                                v-if="checkInForm.category_ids.length === 0"
+                                class="mt-1 text-[11px] font-bold text-rose-500"
+                            >
+                                Please confirm at least one race category.
+                            </p>
                         </div>
 
                         <div>
@@ -459,18 +648,72 @@ const submitDayOf = () => {
                         @submit.prevent="submitDayOf"
                         class="space-y-4 text-xs"
                     >
+                        <!-- Racer Form Fields with smart match on First/Last name -->
+                        <div
+                            v-if="dayOfForm.racer_option === 'existing'"
+                            class="flex items-center justify-between rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-700 dark:text-emerald-300"
+                        >
+                            <span class="font-bold">
+                                Linked to Existing Racer: {{ dayOfForm.first_name }} {{ dayOfForm.last_name }}
+                            </span>
+                            <button
+                                type="button"
+                                @click="dayOfForm.racer_option = 'new'; dayOfForm.racer_id = null;"
+                                class="text-[11px] font-semibold text-emerald-800 underline hover:no-underline dark:text-emerald-200"
+                            >
+                                Change / Unlink
+                            </button>
+                        </div>
+
                         <div class="grid grid-cols-2 gap-4">
-                            <div>
+                            <div class="relative">
                                 <label
                                     class="mb-1 block font-semibold text-slate-700 dark:text-slate-300"
                                     >First Name *</label
                                 >
                                 <input
                                     v-model="dayOfForm.first_name"
+                                    @input="onDayOfNameInput"
+                                    @focus="isDayOfNameDropdownOpen = true"
                                     type="text"
                                     required
-                                    class="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                                    placeholder="Jane"
+                                    class="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900 focus:border-amber-500 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
                                 />
+
+                                <!-- Live Existing Racer Suggestions Dropdown -->
+                                <div
+                                    v-if="isDayOfNameDropdownOpen && matchingRacers.length > 0 && dayOfForm.racer_option !== 'existing'"
+                                    class="absolute top-full right-0 left-0 z-30 mt-1 max-h-48 divide-y divide-slate-100 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-xl dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900"
+                                >
+                                    <div class="bg-slate-50 px-3 py-1.5 text-[10px] font-bold text-amber-600 uppercase dark:bg-slate-950 dark:text-amber-400">
+                                        ⚡ Existing Racer Match Found:
+                                    </div>
+                                    <button
+                                        v-for="r in matchingRacers"
+                                        :key="r.id"
+                                        type="button"
+                                        @click="selectExistingRacerForDayOf(r)"
+                                        class="flex w-full items-center justify-between px-3.5 py-2 text-left text-xs transition-colors hover:bg-amber-500/10"
+                                    >
+                                        <div>
+                                            <span class="font-bold text-slate-900 dark:text-white">
+                                                {{ r.first_name }} {{ r.last_name }}
+                                            </span>
+                                            <span v-if="r.email" class="block text-[10px] text-slate-500 dark:text-slate-400">
+                                                {{ r.email }}
+                                            </span>
+                                        </div>
+                                        <div class="flex items-center gap-2 font-mono text-[11px]">
+                                            <span v-if="r.team" class="text-slate-500 dark:text-slate-400">
+                                                {{ r.team.name }}
+                                            </span>
+                                            <span v-if="r.bib_number" class="rounded bg-amber-500/20 px-1.5 py-0.5 font-bold text-amber-700 dark:text-amber-300">
+                                                Bib #{{ r.bib_number }}
+                                            </span>
+                                        </div>
+                                    </button>
+                                </div>
                             </div>
                             <div>
                                 <label
@@ -479,9 +722,12 @@ const submitDayOf = () => {
                                 >
                                 <input
                                     v-model="dayOfForm.last_name"
+                                    @input="onDayOfNameInput"
+                                    @focus="isDayOfNameDropdownOpen = true"
                                     type="text"
                                     required
-                                    class="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                                    placeholder="Doe"
+                                    class="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900 focus:border-amber-500 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
                                 />
                             </div>
                         </div>
@@ -495,6 +741,7 @@ const submitDayOf = () => {
                                 <input
                                     v-model="dayOfForm.email"
                                     type="email"
+                                    placeholder="racer@example.com"
                                     class="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
                                 />
                             </div>
@@ -515,60 +762,108 @@ const submitDayOf = () => {
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label
-                                    class="mb-1 block font-bold text-amber-600 dark:text-amber-400"
-                                    >Clothespin Number *</label
+                                    class="mb-1 block font-semibold text-slate-700 dark:text-slate-300"
+                                    >Team / Club Name</label
                                 >
-                                <input
-                                    v-model="dayOfForm.clothespin_number"
-                                    type="text"
-                                    placeholder="e.g. 15"
-                                    required
-                                    class="w-full rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm font-bold text-slate-900 focus:outline-none dark:text-white"
-                                />
+                                <select
+                                    v-model="dayOfForm.team_id"
+                                    class="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                                >
+                                    <option :value="null">
+                                        Independent (No Team)
+                                    </option>
+                                    <option
+                                        v-for="t in teams"
+                                        :key="t.id"
+                                        :value="t.id"
+                                    >
+                                        {{ t.name }}
+                                    </option>
+                                </select>
                             </div>
-
                             <div>
                                 <label
                                     class="mb-1 block font-semibold text-slate-700 dark:text-slate-300"
-                                    >Race Category *</label
+                                    >Or Add New Team</label
                                 >
-                                <select
-                                    v-model="dayOfForm.category_id"
+                                <input
+                                    v-model="dayOfForm.new_team_name"
+                                    type="text"
+                                    placeholder="Type new team name..."
                                     class="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
-                                >
-                                    <option
-                                        v-for="cat in categories"
-                                        :key="cat.id"
-                                        :value="cat.id"
-                                    >
-                                        {{ cat.name }} (Wave {{ cat.wave }})
-                                    </option>
-                                </select>
+                                />
                             </div>
                         </div>
 
                         <div>
                             <label
-                                class="mb-1 block font-semibold text-slate-700 dark:text-slate-300"
-                                >Racer Wave(s) Participating Today *</label
+                                class="mb-1 block text-xs font-bold tracking-wider text-amber-600 uppercase dark:text-amber-400"
+                                >1. Participating Wave(s) *</label
                             >
                             <div
-                                class="flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950"
+                                class="flex flex-wrap items-center gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3"
                             >
                                 <label
                                     v-for="w in availableWaves"
                                     :key="w"
-                                    class="flex cursor-pointer items-center gap-1.5 font-bold text-slate-900 dark:text-white"
+                                    class="flex cursor-pointer items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-white"
                                 >
                                     <input
                                         type="checkbox"
                                         :value="w"
-                                        v-model="dayOfForm.waves"
+                                        :checked="dayOfForm.waves.includes(w)"
+                                        @change="toggleWaveForDayOf(w)"
                                         class="rounded text-amber-500 focus:ring-amber-500"
                                     />
                                     <span>Wave {{ w }}</span>
                                 </label>
                             </div>
+                        </div>
+
+                        <div>
+                            <label
+                                class="mb-1 block text-xs font-bold tracking-wider text-slate-700 uppercase dark:text-slate-300"
+                                >2. Select Race Category / Categories *</label
+                            >
+                            <div
+                                class="grid max-h-48 grid-cols-1 gap-2 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50 p-3 sm:grid-cols-2 dark:border-slate-800 dark:bg-slate-950"
+                            >
+                                <label
+                                    v-for="cat in dayOfAvailableCategories"
+                                    :key="cat.id"
+                                    class="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white p-2 text-xs font-semibold text-slate-900 transition-colors hover:border-amber-500 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+                                >
+                                    <input
+                                        type="checkbox"
+                                        :value="cat.id"
+                                        v-model="dayOfForm.category_ids"
+                                        class="rounded text-amber-500 focus:ring-amber-500"
+                                    />
+                                    <div class="flex flex-col">
+                                        <span class="font-bold">{{
+                                            cat.name
+                                        }}</span>
+                                        <span
+                                            class="text-[10px] text-slate-500 dark:text-slate-400"
+                                            >Wave {{ cat.wave }}</span
+                                        >
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label
+                                class="mb-1 block text-xs font-bold text-amber-600 dark:text-amber-400"
+                                >Clothespin Tag Number *</label
+                            >
+                            <input
+                                v-model="dayOfForm.clothespin_number"
+                                type="text"
+                                placeholder="e.g. 15"
+                                required
+                                class="w-full rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm font-bold text-slate-900 focus:outline-none dark:text-white"
+                            />
                         </div>
 
                         <div class="grid grid-cols-3 gap-3">

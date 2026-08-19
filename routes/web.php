@@ -16,6 +16,7 @@ Route::get('/standings', [PublicPageController::class, 'standings'])->name('stan
 // Public Racer Registration
 Route::get('/register-race', [RegistrationController::class, 'create'])->name('register.create');
 Route::post('/register-race', [RegistrationController::class, 'store'])->name('register.store');
+Route::get('/register-race/{racer}/confirmation', [RegistrationController::class, 'show'])->name('register.confirmation');
 
 // Authenticated Admin Dashboard & Management
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -35,6 +36,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Registrations Management
     Route::get('/admin/registrations', [AdminController::class, 'registrations'])->name('admin.registrations.index');
+    Route::post('/admin/registrations', [AdminController::class, 'storeRegistration'])->name('admin.registrations.store');
+    Route::post('/admin/registrations/{registration}/approve', [AdminController::class, 'approveRegistration'])->name('admin.registrations.approve');
+    Route::post('/admin/registrations/{registration}/reject', [AdminController::class, 'rejectRegistration'])->name('admin.registrations.reject');
     Route::put('/admin/registrations/{registration}', [AdminController::class, 'updateRegistration'])->name('admin.registrations.update');
     Route::delete('/admin/registrations/{registration}', [AdminController::class, 'deleteRegistration'])->name('admin.registrations.destroy');
 
@@ -50,8 +54,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/admin/events/{event}', [AdminController::class, 'deleteEvent'])->name('admin.events.destroy');
 
     Route::post('/admin/categories', [AdminController::class, 'storeCategory'])->name('admin.categories.store');
+    Route::post('/admin/categories/reorder', [AdminController::class, 'reorderCategories'])->name('admin.categories.reorder');
     Route::put('/admin/categories/{category}', [AdminController::class, 'updateCategory'])->name('admin.categories.update');
     Route::delete('/admin/categories/{category}', [AdminController::class, 'deleteCategory'])->name('admin.categories.destroy');
+
+    Route::post('/admin/teams', [AdminController::class, 'storeTeam'])->name('admin.teams.store');
+    Route::put('/admin/teams/{team}', [AdminController::class, 'updateTeam'])->name('admin.teams.update');
+    Route::delete('/admin/teams/{team}', [AdminController::class, 'deleteTeam'])->name('admin.teams.destroy');
 
     // Admin Account Management
     Route::get('/admin/users', [AdminController::class, 'users'])->name('admin.users.index');

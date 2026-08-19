@@ -78,41 +78,57 @@ class RegistrationController extends Controller
             $racer->update(['bib_number' => $validated['bib_number']]);
         }
 
-        // Create registrations for each selected category
-        foreach ($validated['category_ids'] as $index => $catId) {
-            $amountPaid = 0.00;
-            if ($validated['is_season_pass']) {
-                $amountPaid = ($index === 0) ? 70.00 : 0.00; // $70 season flat for primary, secondary BC/extra free
+        // Calculate amount paid
+        $amountPaid = 0.00;
+        if ($validated['is_season_pass']) {
+            $amountPaid = 70.00;
+        } else {
+            if ($validated['fee_type'] === 'youth') {
+                $amountPaid = 20.00;
+            } elseif ($validated['fee_type'] === 'race') {
+                $amountPaid = 35.00;
             } else {
-                if ($validated['fee_type'] === 'youth') {
-                    $amountPaid = 20.00;
-                } elseif ($validated['fee_type'] === 'race') {
-                    $amountPaid = 35.00;
-                } else {
-                    $amountPaid = 0.00; // BC / Kids / Costume
-                }
+                $amountPaid = 0.00; // BC / Kids / Costume
             }
-
-            $seasonYear = 2026;
-            if (! $validated['is_season_pass'] && $validated['event_id']) {
-                $evt = Event::find($validated['event_id']);
-                if ($evt) {
-                    $seasonYear = $evt->season_year ?? 2026;
-                }
-            }
-
-            Registration::create([
-                'racer_id' => $racer->id,
-                'event_id' => $validated['is_season_pass'] ? null : $validated['event_id'],
-                'category_id' => $catId,
-                'season_year' => $seasonYear,
-                'fee_type' => $validated['fee_type'],
-                'payment_method' => $paymentMethod,
-                'amount_paid' => $amountPaid,
-                'is_season_pass' => $validated['is_season_pass'],
-            ]);
         }
 
-        return redirect()->route('events.index')->with('success', 'Registration submitted successfully! See you at the races.');
+        $seasonYear = 2026;
+        if (! $validated['is_season_pass'] && $validated['event_id']) {
+            $evt = Event::find($validated['event_id']);
+            if ($evt) {
+                $seasonYear = $evt->season_year ?? 2026;
+            }
+        }
+
+        // Create single registration and sync categories
+        $registration = Registration::create([
+            'racer_id' => $racer->id,
+            'event_id' => $validated['is_season_pass'] ? null : $validated['event_id'],
+            'season_year' => $seasonYear,
+            'fee_type' => $validated['fee_type'],
+            'payment_method' => $paymentMethod,
+            'amount_paid' => $amountPaid,
+            'is_season_pass' => $validated['is_season_pass'],
+            'status' => 'pending',
+        ]);
+
+        $registration->categories()->sync($validated['category_ids']);
+
+        return redirect()->route('register.confirmation', $racer)->with('success', 'Registration submitted successfully! See you at the races.');
+    }
+
+    public function show(Racer $racer): Response
+    {
+        $racer->load('team');
+
+        $registrations = Registration::where('racer_id', $racer->id)
+            ->with(['categories', 'event'])
+            ->latest()
+            ->get();
+
+        return Inertia::render('Registration/Show', [
+            'racer' => $racer,
+            'registrations' => $registrations,
+        ]);
     }
 }

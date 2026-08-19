@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Event;
 use App\Models\Page;
 use App\Models\RaceResult;
+use App\Models\Registration;
 use App\Models\Team;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -89,17 +90,43 @@ class PublicPageController extends Controller
 
     public function showEvent(Event $event): Response
     {
-        $event->load(['results.racer.registrations', 'results.racer.team', 'results.category']);
+        $event->load([
+            'results.racer.registrations',
+            'results.racer.team',
+            'results.category',
+            'registrations.racer.team',
+            'registrations.categories',
+        ]);
         $categories = Category::orderBy('podium_order', 'asc')->get();
         $pages = Page::where('is_published', true)->select('slug', 'title')->get();
 
-        $resultsByCategory = $event->results
-            ->groupBy('category_id');
+        $resultsByCategory = $event->results->groupBy('category_id');
+
+        // Start list: group pre-registered / checked-in racers by category
+        // Includes season pass registrants matching the event year or event-specific registrants
+        $registrations = Registration::with(['racer.team', 'categories'])
+            ->where('status', 'approved')
+            ->where(function ($query) use ($event) {
+                $query->where('event_id', $event->id)
+                    ->orWhere(function ($q) use ($event) {
+                        $q->where('is_season_pass', true)
+                            ->where('season_year', $event->season_year);
+                    });
+            })
+            ->get();
+
+        $startListByCategory = [];
+        foreach ($registrations as $reg) {
+            foreach ($reg->categories as $cat) {
+                $startListByCategory[$cat->id][] = $reg;
+            }
+        }
 
         return Inertia::render('Events/Show', [
             'event' => $event,
             'categories' => $categories,
             'resultsByCategory' => $resultsByCategory,
+            'startListByCategory' => $startListByCategory,
             'pages' => $pages,
         ]);
     }

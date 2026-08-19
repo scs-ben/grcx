@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Registration extends Model
 {
@@ -13,7 +14,6 @@ class Registration extends Model
     protected $fillable = [
         'racer_id',
         'event_id',
-        'category_id',
         'season_year',
         'fee_type',
         'payment_method',
@@ -21,6 +21,7 @@ class Registration extends Model
         'is_season_pass',
         'clothespin_number',
         'is_checked_in',
+        'status',
     ];
 
     protected $casts = [
@@ -40,8 +41,8 @@ class Registration extends Model
         return $this->belongsTo(Event::class);
     }
 
-    public function category(): BelongsTo
+    public function categories(): BelongsToMany
     {
-        return $this->belongsTo(Category::class);
+        return $this->belongsToMany(Category::class);
     }
 }

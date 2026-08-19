@@ -176,21 +176,25 @@ MARKDOWN,
         }
 
         // Register Alex & Samantha in A Open & A Womens
-        Registration::firstOrCreate([
+        $reg1 = Registration::firstOrCreate([
             'racer_id' => $racerModels[0]->id,
             'event_id' => $eventModels[0]->id,
-            'category_id' => $categoryModels['A Open']->id,
+        ], [
             'fee_type' => 'race',
             'amount_paid' => 35.00,
+            'status' => 'approved',
         ]);
+        $reg1->categories()->syncWithoutDetaching([$categoryModels['A Open']->id]);
 
-        Registration::firstOrCreate([
+        $reg2 = Registration::firstOrCreate([
             'racer_id' => $racerModels[1]->id,
             'event_id' => $eventModels[0]->id,
-            'category_id' => $categoryModels['A Womens']->id,
+        ], [
             'fee_type' => 'race',
             'amount_paid' => 35.00,
+            'status' => 'approved',
         ]);
+        $reg2->categories()->syncWithoutDetaching([$categoryModels['A Womens']->id]);
 
         // Seed race results for Event 1
         RaceResult::firstOrCreate([

@@ -9,8 +9,10 @@ import {
     Award,
     MapPin,
     Flag,
+    Shield,
+    GripVertical,
 } from '@lucide/vue';
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 
 interface Event {
@@ -32,11 +34,83 @@ interface Category {
     podium_order: number;
 }
 
-defineProps<{
+interface Team {
+    id: number;
+    name: string;
+    racers_count?: number;
+}
+
+const props = defineProps<{
     events: Event[];
     categories: Category[];
+    teams?: Team[];
     waves: string[];
 }>();
+
+// Local copy of categories to allow drag-and-drop rearranging
+const localCategories = ref<Category[]>([...props.categories]);
+
+watch(
+    () => props.categories,
+    (newVal) => {
+        localCategories.value = [...newVal];
+    },
+    { deep: true },
+);
+
+// Drag & drop state for categories
+const draggedCatId = ref<number | null>(null);
+
+const onCatDragStart = (catId: number, e: DragEvent) => {
+    draggedCatId.value = catId;
+    if (e.dataTransfer) {
+        e.dataTransfer.effectAllowed = 'move';
+    }
+};
+
+const onCatDragOver = (targetCatId: number, wave: string, e: DragEvent) => {
+    e.preventDefault();
+    if (!draggedCatId.value || draggedCatId.value === targetCatId) {
+        return;
+    }
+
+    const waveCats = localCategories.value.filter((c) => c.wave === wave);
+    const fromIdx = waveCats.findIndex((c) => c.id === draggedCatId.value);
+    const toIdx = waveCats.findIndex((c) => c.id === targetCatId);
+
+    if (fromIdx === -1 || toIdx === -1) {
+        return;
+    }
+
+    const itemToMove = waveCats[fromIdx];
+    waveCats.splice(fromIdx, 1);
+    waveCats.splice(toIdx, 0, itemToMove);
+
+    // Update podium_order within this wave
+    waveCats.forEach((cat, index) => {
+        cat.podium_order = index + 1;
+    });
+
+    // Merge updated wave back into localCategories
+    const otherCats = localCategories.value.filter((c) => c.wave !== wave);
+    localCategories.value = [...otherCats, ...waveCats];
+};
+
+const onCatDragEnd = (wave: string) => {
+    draggedCatId.value = null;
+
+    // Send updated podium_order to backend
+    const waveCats = localCategories.value
+        .filter((c) => c.wave === wave)
+        .map((c, index) => ({
+            id: c.id,
+            podium_order: index + 1,
+        }));
+
+    useForm({ categories: waveCats }).post('/admin/categories/reorder', {
+        preserveScroll: true,
+    });
+};
 
 // Event Modal State
 const isEventModalOpen = ref(false);
@@ -103,11 +177,15 @@ const categoryForm = useForm({
     podium_order: 1,
 });
 
-const openCreateCategoryModal = () => {
+const openCreateCategoryModal = (defaultWave?: string) => {
     editingCategory.value = null;
     categoryForm.reset();
-    categoryForm.wave = 'C';
+    categoryForm.wave = defaultWave || 'C';
     categoryForm.is_scoring = true;
+    const existingInWave = localCategories.value.filter(
+        (c) => c.wave === (defaultWave || 'C'),
+    );
+    categoryForm.podium_order = existingInWave.length + 1;
     isCategoryModalOpen.value = true;
 };
 
@@ -142,6 +220,49 @@ const submitCategory = () => {
 const deleteCategory = (cat: Category) => {
     if (confirm(`Are you sure you want to delete category "${cat.name}"?`)) {
         useForm({}).delete(`/admin/categories/${cat.id}`);
+    }
+};
+
+// Team Modal State
+const isTeamModalOpen = ref(false);
+const editingTeam = ref<Team | null>(null);
+
+const teamForm = useForm({
+    name: '',
+});
+
+const openCreateTeamModal = () => {
+    editingTeam.value = null;
+    teamForm.reset();
+    isTeamModalOpen.value = true;
+};
+
+const openEditTeamModal = (t: Team) => {
+    editingTeam.value = t;
+    teamForm.name = t.name;
+    isTeamModalOpen.value = true;
+};
+
+const closeTeamModal = () => {
+    isTeamModalOpen.value = false;
+    editingTeam.value = null;
+};
+
+const submitTeam = () => {
+    if (editingTeam.value) {
+        teamForm.put(`/admin/teams/${editingTeam.value.id}`, {
+            onSuccess: () => closeTeamModal(),
+        });
+    } else {
+        teamForm.post('/admin/teams', {
+            onSuccess: () => closeTeamModal(),
+        });
+    }
+};
+
+const deleteTeam = (t: Team) => {
+    if (confirm(`Are you sure you want to delete team "${t.name}"?`)) {
+        useForm({}).delete(`/admin/teams/${t.id}`);
     }
 };
 </script>
@@ -282,15 +403,25 @@ const deleteCategory = (cat: Category) => {
                                     >Wave {{ w }} Heat</span
                                 >
                             </div>
-                            <span
-                                class="text-xs font-semibold text-slate-500 dark:text-slate-400"
-                            >
-                                {{
-                                    categories.filter((c) => c.wave === w)
-                                        .length
-                                }}
-                                Categories
-                            </span>
+                            <div class="flex items-center gap-3">
+                                <span
+                                    class="text-xs font-semibold text-slate-500 dark:text-slate-400"
+                                >
+                                    {{
+                                        localCategories.filter((c) => c.wave === w)
+                                            .length
+                                    }}
+                                    Categories
+                                </span>
+                                <button
+                                    @click="openCreateCategoryModal(w)"
+                                    type="button"
+                                    class="inline-flex items-center gap-1 rounded-lg bg-amber-500/10 px-2.5 py-1 text-xs font-bold text-amber-700 transition-colors hover:bg-amber-500/20 dark:bg-amber-500/20 dark:text-amber-300"
+                                    :title="`Add category to Wave ${w}`"
+                                >
+                                    <Plus class="h-3.5 w-3.5" /> Add to Wave {{ w }}
+                                </button>
+                            </div>
                         </div>
 
                         <div class="overflow-x-auto">
@@ -299,6 +430,8 @@ const deleteCategory = (cat: Category) => {
                                     class="bg-slate-100/50 text-[10px] font-bold text-slate-500 uppercase dark:bg-slate-900/50 dark:text-slate-400"
                                 >
                                     <tr>
+                                        <th class="w-10 px-3 py-3 text-center"></th>
+                                        <th class="px-4 py-3">Podium Order</th>
                                         <th class="px-6 py-3">Category Name</th>
                                         <th class="px-6 py-3">
                                             Duration / Format
@@ -316,12 +449,25 @@ const deleteCategory = (cat: Category) => {
                                     class="divide-y divide-slate-100 dark:divide-slate-800/60"
                                 >
                                     <tr
-                                        v-for="cat in categories.filter(
+                                        v-for="(cat, idx) in localCategories.filter(
                                             (c) => c.wave === w,
                                         )"
                                         :key="cat.id"
-                                        class="hover:bg-slate-50 dark:hover:bg-slate-800/30"
+                                        draggable="true"
+                                        @dragstart="onCatDragStart(cat.id, $event)"
+                                        @dragover="onCatDragOver(cat.id, w, $event)"
+                                        @dragend="onCatDragEnd(w)"
+                                        class="cursor-move hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors"
+                                        :class="{'opacity-50 bg-amber-500/10': draggedCatId === cat.id}"
                                     >
+                                        <td class="w-10 px-3 py-3.5 text-center text-slate-400">
+                                            <GripVertical class="h-4 w-4 inline-block" />
+                                        </td>
+                                        <td class="px-4 py-3.5 font-mono">
+                                            <span class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-amber-500/10 font-bold text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">
+                                                #{{ cat.podium_order ?? (idx + 1) }}
+                                            </span>
+                                        </td>
                                         <td
                                             class="px-6 py-3.5 font-bold text-slate-900 dark:text-white"
                                         >
@@ -380,6 +526,105 @@ const deleteCategory = (cat: Category) => {
                             </table>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Teams Section -->
+            <div
+                class="space-y-4 border-t border-slate-200 pt-6 dark:border-slate-800"
+            >
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2
+                            class="flex items-center gap-2 text-2xl font-bold text-slate-900 dark:text-slate-100"
+                        >
+                            <Shield class="h-6 w-6 text-amber-500" />
+                            Manage Teams & Clubs
+                        </h2>
+                        <p
+                            class="mt-0.5 text-xs text-slate-600 dark:text-slate-400"
+                        >
+                            Create, edit, or remove racing teams and clubs.
+                        </p>
+                    </div>
+                    <button
+                        @click="openCreateTeamModal"
+                        class="flex items-center gap-1.5 rounded-xl bg-amber-500 px-4 py-2.5 text-xs font-bold text-slate-950 shadow-sm transition-all hover:bg-amber-400"
+                    >
+                        <Plus class="h-4 w-4" /> Add Team
+                    </button>
+                </div>
+
+                <div
+                    class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900"
+                >
+                    <table class="w-full text-left text-xs">
+                        <thead
+                            class="border-b border-slate-200 bg-slate-50 font-semibold text-slate-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400"
+                        >
+                            <tr>
+                                <th class="px-6 py-3.5">Team Name</th>
+                                <th class="px-6 py-3.5">Active Racers</th>
+                                <th class="px-6 py-3.5 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody
+                            class="divide-y divide-slate-100 text-slate-800 dark:divide-slate-800/60 dark:text-slate-200"
+                        >
+                            <tr
+                                v-for="t in teams || []"
+                                :key="t.id"
+                                class="hover:bg-slate-50 dark:hover:bg-slate-800/40"
+                            >
+                                <td
+                                    class="px-6 py-4 font-bold text-slate-900 dark:text-white"
+                                >
+                                    <span
+                                        class="inline-flex items-center gap-1.5"
+                                    >
+                                        <Shield
+                                            class="h-4 w-4 text-amber-500"
+                                        />
+                                        {{ t.name }}
+                                    </span>
+                                </td>
+                                <td
+                                    class="px-6 py-4 font-mono font-bold text-slate-600 dark:text-slate-400"
+                                >
+                                    {{ t.racers_count ?? 0 }} Racers
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <div
+                                        class="flex items-center justify-end gap-2"
+                                    >
+                                        <button
+                                            @click="openEditTeamModal(t)"
+                                            class="rounded p-1 text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-slate-800"
+                                            title="Edit Team"
+                                        >
+                                            <Edit3 class="h-4 w-4" />
+                                        </button>
+                                        <button
+                                            @click="deleteTeam(t)"
+                                            class="rounded p-1 text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950"
+                                            title="Delete Team"
+                                        >
+                                            <Trash2 class="h-4 w-4" />
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr v-if="!teams || teams.length === 0">
+                                <td
+                                    colspan="3"
+                                    class="px-6 py-8 text-center text-slate-400 italic"
+                                >
+                                    No teams found. Click "Add Team" to create
+                                    one.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
@@ -646,6 +891,74 @@ const deleteCategory = (cat: Category) => {
                                     editingCategory
                                         ? 'Update Category'
                                         : 'Create Category'
+                                }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Team Modal -->
+            <div
+                v-if="isTeamModalOpen"
+                class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+            >
+                <div
+                    class="w-full max-w-md space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900"
+                >
+                    <div
+                        class="flex items-center justify-between border-b border-slate-200 pb-3 dark:border-slate-800"
+                    >
+                        <h3
+                            class="text-lg font-bold text-slate-900 dark:text-white"
+                        >
+                            {{
+                                editingTeam ? 'Edit Team Name' : 'Add New Team'
+                            }}
+                        </h3>
+                        <button
+                            @click="closeTeamModal"
+                            class="text-slate-400 hover:text-slate-600 dark:hover:text-white"
+                        >
+                            <X class="h-5 w-5" />
+                        </button>
+                    </div>
+
+                    <form
+                        @submit.prevent="submitTeam"
+                        class="space-y-4 text-xs"
+                    >
+                        <div>
+                            <label
+                                class="mb-1 block font-semibold text-slate-700 dark:text-slate-300"
+                                >Team / Club Name *</label
+                            >
+                            <input
+                                v-model="teamForm.name"
+                                type="text"
+                                required
+                                placeholder="e.g. Speedy Spokes CX"
+                                class="w-full rounded-lg border border-slate-300 bg-slate-50 px-3.5 py-2 text-slate-900 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                            />
+                        </div>
+
+                        <div
+                            class="flex justify-end gap-2 border-t border-slate-200 pt-3 dark:border-slate-800"
+                        >
+                            <button
+                                type="button"
+                                @click="closeTeamModal"
+                                class="rounded-lg bg-slate-100 px-4 py-2 font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                :disabled="teamForm.processing"
+                                class="rounded-lg bg-amber-500 px-5 py-2 font-bold text-slate-950 hover:bg-amber-400"
+                            >
+                                {{
+                                    editingTeam ? 'Update Team' : 'Create Team'
                                 }}
                             </button>
                         </div>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3';
 import { Bike } from '@lucide/vue';
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
 import PublicLayout from '@/layouts/PublicLayout.vue';
 
 interface Event {
@@ -29,6 +29,8 @@ const props = defineProps<{
     teams: Team[];
 }>();
 
+const availableWaves = ['C', 'A', 'B', 'Kids'];
+
 const form = useForm({
     first_name: '',
     last_name: '',
@@ -39,11 +41,31 @@ const form = useForm({
     bib_number: '',
     team_id: null as number | null,
     new_team_name: '',
+    waves: ['C'] as string[],
+    category_ids: [] as number[],
     is_season_pass: true,
     event_id: props.events[0]?.id || null,
-    category_ids: [] as number[],
     fee_type: 'season',
 });
+
+const filteredCategories = computed(() => {
+    if (!form.waves || form.waves.length === 0) {
+        return props.categories;
+    }
+
+    return props.categories.filter((c) => form.waves.includes(c.wave));
+});
+
+const toggleWave = (wave: string) => {
+    if (form.waves.includes(wave)) {
+        form.waves = form.waves.filter((w) => w !== wave);
+    } else {
+        form.waves.push(wave);
+    }
+
+    const validCatIds = new Set(filteredCategories.value.map((c) => c.id));
+    form.category_ids = form.category_ids.filter((id) => validCatIds.has(id));
+};
 
 const calculatedFee = computed(() => {
     if (form.is_season_pass) {
@@ -68,7 +90,7 @@ const submit = () => {
 
 <template>
     <PublicLayout>
-        <div class="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
+        <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
             <div
                 class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-900"
             >
@@ -313,11 +335,37 @@ const submit = () => {
                         </select>
                     </div>
 
-                    <!-- Category Selection (Multi-Category Supported!) -->
+                    <!-- Step 1: Participating Waves -->
                     <div>
                         <label
-                            class="mb-1 block text-sm font-bold text-slate-900 dark:text-white"
-                            >Race Categories * (Select all that apply)</label
+                            class="mb-1 block text-xs font-bold tracking-wider text-amber-600 uppercase dark:text-amber-400"
+                            >1. Participating Wave(s) *</label
+                        >
+                        <div
+                            class="flex flex-wrap items-center gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3"
+                        >
+                            <label
+                                v-for="w in availableWaves"
+                                :key="'pub-wave-' + w"
+                                class="flex cursor-pointer items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-white"
+                            >
+                                <input
+                                    type="checkbox"
+                                    :value="w"
+                                    :checked="form.waves.includes(w)"
+                                    @change="toggleWave(w)"
+                                    class="rounded text-amber-500 focus:ring-amber-500"
+                                />
+                                <span>Wave {{ w }}</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Race Category Selection (Multi-Category Supported!) -->
+                    <div>
+                        <label
+                            class="mb-1 block text-xs font-bold tracking-wider text-slate-700 uppercase dark:text-slate-300"
+                            >2. Select Race Category / Categories *</label
                         >
                         <p
                             class="mb-3 text-xs text-slate-600 dark:text-slate-400"
@@ -327,27 +375,28 @@ const submit = () => {
                         </p>
 
                         <div
-                            class="grid max-h-60 grid-cols-1 gap-3 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50 p-3 sm:grid-cols-2 dark:border-slate-800 dark:bg-slate-950"
+                            class="grid max-h-60 grid-cols-1 gap-2 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50 p-3 sm:grid-cols-2 dark:border-slate-800 dark:bg-slate-950"
                         >
                             <label
-                                v-for="cat in categories"
+                                v-for="cat in filteredCategories"
                                 :key="cat.id"
-                                class="flex cursor-pointer items-center gap-2 rounded-lg p-2 text-xs hover:bg-slate-200/60 dark:hover:bg-slate-900"
+                                class="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white p-2 text-xs font-semibold text-slate-900 transition-colors hover:border-amber-500 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
                             >
                                 <input
                                     type="checkbox"
                                     :value="cat.id"
                                     v-model="form.category_ids"
-                                    class="rounded border-slate-300 bg-white text-amber-500 dark:border-slate-700 dark:bg-slate-900"
+                                    class="rounded text-amber-500 focus:ring-amber-500"
                                 />
-                                <span
-                                    class="font-medium text-slate-900 dark:text-white"
-                                    >{{ cat.name }}</span
-                                >
-                                <span
-                                    class="font-mono text-[10px] text-slate-500 dark:text-slate-400"
-                                    >({{ cat.wave }})</span
-                                >
+                                <div class="flex flex-col">
+                                    <span class="font-bold">{{
+                                        cat.name
+                                    }}</span>
+                                    <span
+                                        class="text-[10px] text-slate-500 dark:text-slate-400"
+                                        >Wave {{ cat.wave }}</span
+                                    >
+                                </div>
                             </label>
                         </div>
                     </div>

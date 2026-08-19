@@ -100,7 +100,7 @@ defineProps<{
                         :href="`/events/${evt.id}`"
                         class="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-100 py-2.5 text-xs font-bold text-slate-800 transition-all hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
                     >
-                        <span>View Results & Timing</span>
+                        <span>View Start List & Results</span>
                         <ChevronRight
                             class="h-4 w-4 text-amber-600 dark:text-amber-400"
                         />
