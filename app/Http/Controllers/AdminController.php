@@ -37,10 +37,12 @@ class AdminController extends Controller
         $activeEvent = Event::find($selectedEventId);
         $resultsByCategory = [];
         $startListByCategory = [];
+        $bcCombinedResults = [];
 
         if ($activeEvent) {
             $activeEvent->load(['results.racer.team', 'results.category']);
             $resultsByCategory = $activeEvent->results->groupBy('category_id');
+            $bcCombinedResults = RaceResult::calculateBcCombinedForEvent($activeEvent->id);
 
             $registrations = Registration::with(['racer.team', 'categories'])
                 ->where('status', 'approved')
@@ -68,6 +70,7 @@ class AdminController extends Controller
             'categories' => $categories,
             'resultsByCategory' => $resultsByCategory,
             'startListByCategory' => $startListByCategory,
+            'bcCombinedResults' => $bcCombinedResults,
         ]);
     }
 

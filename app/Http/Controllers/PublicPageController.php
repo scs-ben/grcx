@@ -72,10 +72,12 @@ class PublicPageController extends Controller
 
         $activeEvent = Event::find($selectedEventId);
         $resultsByCategory = [];
+        $bcCombinedResults = [];
 
         if ($activeEvent) {
             $activeEvent->load(['results.racer.registrations', 'results.racer.team', 'results.category']);
             $resultsByCategory = $activeEvent->results->groupBy('category_id');
+            $bcCombinedResults = RaceResult::calculateBcCombinedForEvent($activeEvent->id);
         }
 
         return Inertia::render('Results/Index', [
@@ -84,6 +86,7 @@ class PublicPageController extends Controller
             'activeEvent' => $activeEvent,
             'categories' => $categories,
             'resultsByCategory' => $resultsByCategory,
+            'bcCombinedResults' => $bcCombinedResults,
             'pages' => $pages,
         ]);
     }
@@ -101,6 +104,7 @@ class PublicPageController extends Controller
         $pages = Page::where('is_published', true)->select('slug', 'title')->get();
 
         $resultsByCategory = $event->results->groupBy('category_id');
+        $bcCombinedResults = RaceResult::calculateBcCombinedForEvent($event->id);
 
         // Start list: group pre-registered / checked-in racers by category
         // Includes season pass registrants matching the event year or event-specific registrants
@@ -128,6 +132,7 @@ class PublicPageController extends Controller
             'categories' => $categories,
             'resultsByCategory' => $resultsByCategory,
             'startListByCategory' => $startListByCategory,
+            'bcCombinedResults' => $bcCombinedResults,
             'pages' => $pages,
         ]);
     }

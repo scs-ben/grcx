@@ -8,6 +8,7 @@ import {
     Calendar,
     Users,
     HelpCircle,
+    Activity,
 } from '@lucide/vue';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
@@ -55,6 +56,11 @@ const mainNavItems: NavItem[] = [
         title: 'Manage Pages',
         href: '/admin/pages',
         icon: FileText,
+    },
+    {
+        title: 'Performance (Pulse)',
+        href: '/pulse',
+        icon: Activity,
     },
     {
         title: 'Admin Users',

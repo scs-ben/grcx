@@ -1,5 +1,8 @@
 {
-    "agents": ["antigravity", "claude_code"],
+    "agents": [
+        "antigravity",
+        "claude_code"
+    ],
     "cloud": false,
     "guidelines": true,
     "mcp": true,
@@ -9,6 +12,7 @@
         "infer-conventions",
         "fortify-development",
         "laravel-best-practices",
+        "pulse-development",
         "wayfinder-development",
         "pest-testing",
         "inertia-vue-development",

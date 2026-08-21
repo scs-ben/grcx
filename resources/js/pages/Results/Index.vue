@@ -38,6 +38,23 @@ interface RaceResult {
     category: Category;
 }
 
+interface BcCombinedResult {
+    racer: Racer;
+    wave_c_time: string | null;
+    wave_c_laps: number;
+    wave_c_position: number | null;
+    wave_c_category: string | null;
+    wave_b_time: string | null;
+    wave_b_laps: number;
+    wave_b_position: number | null;
+    wave_b_category: string | null;
+    total_laps: number;
+    total_seconds: number | null;
+    combined_time: string | null;
+    is_complete: boolean;
+    finish_position: number;
+}
+
 interface Event {
     id: number;
     name: string;
@@ -53,6 +70,7 @@ const props = defineProps<{
     activeEvent?: Event;
     categories: Category[];
     resultsByCategory: Record<number, RaceResult[]>;
+    bcCombinedResults?: BcCombinedResult[];
 }>();
 
 const selectedEvent = ref(props.selectedEventId);
@@ -60,7 +78,7 @@ const racerSearch = ref('');
 const selectedWave = ref<string>('ALL');
 const selectedCategoryFilter = ref<number | 'ALL'>('ALL');
 
-const wavesList = ['ALL', 'C', 'A', 'B', 'Kids'];
+const wavesList = ['ALL', 'C', 'A', 'B', 'BC', 'Kids'];
 
 const onEventChange = () => {
     router.get(
@@ -434,6 +452,189 @@ const waveResults = computed(() => {
                         class="p-6 text-center text-xs text-slate-500 italic dark:text-slate-400"
                     >
                         No Wave {{ waveName }} results recorded for this event.
+                    </div>
+                </div>
+
+                <!-- BC Combined Omnium Table (Wave B + Wave C Combined) -->
+                <div
+                    v-if="selectedWave === 'ALL' || selectedWave === 'BC'"
+                    class="overflow-hidden rounded-2xl border-2 border-amber-500/30 bg-white shadow-xs dark:border-amber-500/20 dark:bg-slate-900"
+                >
+                    <div
+                        class="flex flex-wrap items-center justify-between gap-3 border-b border-amber-500/20 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent px-6 py-4 dark:border-amber-500/10"
+                    >
+                        <div class="flex items-center gap-3">
+                            <Trophy
+                                class="h-5 w-5 text-amber-600 dark:text-amber-400"
+                            />
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <h2
+                                        class="text-lg font-bold text-slate-900 dark:text-white"
+                                    >
+                                        BC Combined Omnium Standings
+                                    </h2>
+                                    <span
+                                        class="rounded-full bg-amber-500 px-2.5 py-0.5 text-[10px] font-black text-slate-950 uppercase"
+                                        >Combined B & C Times</span
+                                    >
+                                </div>
+                                <p
+                                    class="text-xs text-slate-600 dark:text-slate-400"
+                                >
+                                    Combined elapsed times & laps from Wave C
+                                    (30m) and Wave B (45m) heats.
+                                </p>
+                            </div>
+                        </div>
+                        <span
+                            class="text-xs font-medium text-slate-500 dark:text-slate-400"
+                        >
+                            {{ (bcCombinedResults || []).length }} BC Racers
+                        </span>
+                    </div>
+
+                    <div
+                        v-if="(bcCombinedResults || []).length > 0"
+                        class="overflow-x-auto"
+                    >
+                        <table class="w-full text-left text-xs">
+                            <thead
+                                class="border-b border-slate-200 bg-amber-500/5 font-semibold text-slate-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300"
+                            >
+                                <tr>
+                                    <th class="px-6 py-3">Combined Pos</th>
+                                    <th class="px-6 py-3">Bib #</th>
+                                    <th class="px-6 py-3">Racer Name</th>
+                                    <th class="px-6 py-3">Team / Club</th>
+                                    <th class="px-6 py-3">Wave C (30m)</th>
+                                    <th class="px-6 py-3">Wave B (45m)</th>
+                                    <th class="px-6 py-3">Total Laps</th>
+                                    <th class="px-6 py-3">Combined Time</th>
+                                    <th class="px-6 py-3 text-right">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody
+                                class="divide-y divide-slate-100 text-slate-800 dark:divide-slate-800/60 dark:text-slate-200"
+                            >
+                                <tr
+                                    v-for="bc in bcCombinedResults"
+                                    :key="bc.racer.id"
+                                    class="hover:bg-amber-500/5 dark:hover:bg-slate-800/40"
+                                >
+                                    <td
+                                        class="flex items-center gap-2 px-6 py-3.5 font-black text-slate-900 dark:text-slate-100"
+                                    >
+                                        <span
+                                            v-if="bc.finish_position === 1"
+                                            class="flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-[10px] font-black text-slate-950"
+                                            >1</span
+                                        >
+                                        <span
+                                            v-else-if="bc.finish_position === 2"
+                                            class="flex h-5 w-5 items-center justify-center rounded-full bg-slate-300 text-[10px] font-black text-slate-950"
+                                            >2</span
+                                        >
+                                        <span
+                                            v-else-if="bc.finish_position === 3"
+                                            class="flex h-5 w-5 items-center justify-center rounded-full bg-amber-700 text-[10px] font-black text-slate-100"
+                                            >3</span
+                                        >
+                                        <span
+                                            v-else
+                                            class="ml-1 text-slate-500 dark:text-slate-400"
+                                            >{{ bc.finish_position }}</span
+                                        >
+                                    </td>
+                                    <td
+                                        class="px-6 py-3.5 font-mono font-bold text-slate-700 dark:text-slate-300"
+                                    >
+                                        #{{ bc.racer?.bib_number || '—' }}
+                                    </td>
+                                    <td
+                                        class="px-6 py-3.5 font-bold text-slate-900 dark:text-white"
+                                    >
+                                        {{ bc.racer?.first_name }}
+                                        {{ bc.racer?.last_name }}
+                                    </td>
+                                    <td
+                                        class="px-6 py-3.5 font-medium text-slate-600 dark:text-slate-400"
+                                    >
+                                        {{
+                                            bc.racer?.team?.name ||
+                                            'Independent'
+                                        }}
+                                    </td>
+                                    <td
+                                        class="px-6 py-3.5 text-slate-700 dark:text-slate-300"
+                                    >
+                                        <span
+                                            v-if="bc.wave_c_time"
+                                            class="font-mono font-semibold"
+                                            >{{ bc.wave_c_time }}</span
+                                        >
+                                        <span
+                                            v-else
+                                            class="text-slate-400 italic"
+                                            >No time</span
+                                        >
+                                        <span
+                                            class="ml-1 text-[11px] text-slate-500"
+                                            >({{ bc.wave_c_laps }} laps)</span
+                                        >
+                                    </td>
+                                    <td
+                                        class="px-6 py-3.5 text-slate-700 dark:text-slate-300"
+                                    >
+                                        <span
+                                            v-if="bc.wave_b_time"
+                                            class="font-mono font-semibold"
+                                            >{{ bc.wave_b_time }}</span
+                                        >
+                                        <span
+                                            v-else
+                                            class="text-slate-400 italic"
+                                            >Pending Wave B</span
+                                        >
+                                        <span
+                                            class="ml-1 text-[11px] text-slate-500"
+                                            >({{ bc.wave_b_laps }} laps)</span
+                                        >
+                                    </td>
+                                    <td
+                                        class="px-6 py-3.5 font-bold text-slate-900 dark:text-slate-100"
+                                    >
+                                        {{ bc.total_laps }} laps
+                                    </td>
+                                    <td
+                                        class="px-6 py-3.5 font-mono font-black text-amber-600 dark:text-amber-400"
+                                    >
+                                        {{ bc.combined_time || '—' }}
+                                    </td>
+                                    <td class="px-6 py-3.5 text-right">
+                                        <span
+                                            v-if="bc.is_complete"
+                                            class="inline-flex items-center rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400"
+                                        >
+                                            Complete
+                                        </span>
+                                        <span
+                                            v-else
+                                            class="inline-flex items-center rounded-full bg-amber-500/10 px-2.5 py-1 text-[11px] font-bold text-amber-600 dark:text-amber-400"
+                                        >
+                                            In Progress
+                                        </span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div
+                        v-else
+                        class="p-8 text-center text-xs text-slate-500 italic dark:text-slate-400"
+                    >
+                        No BC racers with recorded results in Wave B or Wave C
+                        for this event yet.
                     </div>
                 </div>
             </div>
