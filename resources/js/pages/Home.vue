@@ -145,7 +145,8 @@ defineProps<{
                     3 Epic Race Venues
                 </h2>
                 <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
-                    Each venue offers distinct terrain, technical obstacles, and an electric festival atmosphere.
+                    Each venue offers distinct terrain, technical obstacles, and
+                    an electric festival atmosphere.
                 </p>
             </div>
 
@@ -156,7 +157,9 @@ defineProps<{
                 >
                     <div>
                         <div class="mb-4">
-                            <span class="rounded-md bg-amber-500/10 px-2.5 py-1 text-xs font-black text-amber-600 dark:bg-amber-400/10 dark:text-amber-400">
+                            <span
+                                class="rounded-md bg-amber-500/10 px-2.5 py-1 text-xs font-black text-amber-600 dark:bg-amber-400/10 dark:text-amber-400"
+                            >
                                 Stage 1 • Sept 26
                             </span>
                         </div>
@@ -168,7 +171,8 @@ defineProps<{
                         <p
                             class="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400"
                         >
-                            Opening race featuring deep sand runups, off-camber hill climbs, and fast grass power straightaways.
+                            Opening race featuring deep sand runups, off-camber
+                            hill climbs, and fast grass power straightaways.
                         </p>
                     </div>
                     <Link
@@ -186,7 +190,9 @@ defineProps<{
                 >
                     <div>
                         <div class="mb-4">
-                            <span class="rounded-md bg-amber-500/10 px-2.5 py-1 text-xs font-black text-amber-600 dark:bg-amber-400/10 dark:text-amber-400">
+                            <span
+                                class="rounded-md bg-amber-500/10 px-2.5 py-1 text-xs font-black text-amber-600 dark:bg-amber-400/10 dark:text-amber-400"
+                            >
                                 Stage 2 • Oct 10
                             </span>
                         </div>
@@ -198,7 +204,9 @@ defineProps<{
                         <p
                             class="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400"
                         >
-                            The classic technical course with brutal wooden hurdles, steep stair climbs, and dense autumn forest singletrack.
+                            The classic technical course with brutal wooden
+                            hurdles, steep stair climbs, and dense autumn forest
+                            singletrack.
                         </p>
                     </div>
                     <Link
@@ -216,7 +224,9 @@ defineProps<{
                 >
                     <div>
                         <div class="mb-4">
-                            <span class="rounded-md bg-amber-500/10 px-2.5 py-1 text-xs font-black text-amber-600 dark:bg-amber-400/10 dark:text-amber-400">
+                            <span
+                                class="rounded-md bg-amber-500/10 px-2.5 py-1 text-xs font-black text-amber-600 dark:bg-amber-400/10 dark:text-amber-400"
+                            >
                                 Stage 3 • Oct 25
                             </span>
                         </div>
@@ -228,7 +238,9 @@ defineProps<{
                         <p
                             class="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400"
                         >
-                            The championship finale featuring explosive pack sprints, spectator village, and overall season trophy presentations.
+                            The championship finale featuring explosive pack
+                            sprints, spectator village, and overall season
+                            trophy presentations.
                         </p>
                     </div>
                     <Link
